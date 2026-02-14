@@ -17,7 +17,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // API Documentation
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "VelocityRetail API", Version = "v1" });
+});
 
 // CORS - Allow frontend to communicate
 builder.Services.AddCors(options =>
@@ -31,13 +34,17 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Health Checks
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("Default")!);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "VelocityRetail API v1"));
 }
 
 app.UseHttpsRedirection();
@@ -47,5 +54,6 @@ app.UseCors("AllowFrontend");
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
