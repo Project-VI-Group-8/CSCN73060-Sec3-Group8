@@ -10,6 +10,8 @@ EXPOSE 8081
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="$PATH:/root/.dotnet/tools"
 WORKDIR /src
 COPY ["backend.csproj", "./"]
 RUN dotnet restore "./backend.csproj"

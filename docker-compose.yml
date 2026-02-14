@@ -26,6 +26,22 @@ services:
     depends_on:
       - postgres
 
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: build
+    container_name: ef_migrate
+    environment:
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=postgres;Username=admin;Password=admin123
+    depends_on:
+      - postgres
+    command: >
+      dotnet ef database update
+      --project ./backend.csproj
+      --connection "Host=postgres;Port=5432;Database=postgres;Username=admin;Password=admin123"
+    working_dir: /src
+
   api:
     build:
       context: ./backend
@@ -38,8 +54,11 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: "8080"
       ConnectionStrings__Default: Host=postgres;Port=5432;Database=postgres;Username=admin;Password=admin123
+    volumes:
+      - ./backend/logs:/app/Logs
     depends_on:
-      - postgres
+      migrate:
+        condition: service_completed_successfully
 
   client:
     build:
