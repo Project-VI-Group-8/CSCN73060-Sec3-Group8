@@ -1,7 +1,12 @@
+using backend;
 using backend.Data;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+LoggingConfiguration.ConfigureSerilog();
+builder.Host.UseSerilog();
 
 // Add services to the container
 builder.Services.AddControllers()
@@ -47,6 +52,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "VelocityRetail API v1"));
 }
 
+// Configure request logging
+LoggingConfiguration.ConfigureRequestLogging(app);
+
 app.UseHttpsRedirection();
 
 app.UseCors("AllowFrontend");
@@ -55,5 +63,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
+
+// Ensure logs are flushed on shutdown
+app.Lifetime.ApplicationStopping.Register(Log.CloseAndFlush);
 
 app.Run();
