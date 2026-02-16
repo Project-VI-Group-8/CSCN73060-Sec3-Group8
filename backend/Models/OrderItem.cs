@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace backend.Models;
 
@@ -17,5 +18,12 @@ public class OrderItem
 
 	[Range(1, int.MaxValue)]
 	public int Quantity { get; set; }
+
+	[Column(TypeName = "numeric(10,2)")]
+	[Range(0, 9999999)]
+	public decimal UnitPrice { get; set; }
+
+	[MaxLength(20)]
+	public string Status { get; set; } = "DRAFT"; // DRAFT, CONFIRMED
 }
 
