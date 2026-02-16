@@ -79,7 +79,8 @@ jobs:
         docker logs aspnet_api
         echo ""
         echo "=== Frontend logs ==="
-        docker logs react_client
+        docker logs razor_client
+        echo ""
     
     - name: Cleanup
       if: always()
@@ -95,7 +96,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'  # Adjust if using .NET 7 or 9
+        dotnet-version: '8.0.x'
     
     - name: Restore dependencies
       working-directory: ./backend
@@ -116,21 +117,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
       with:
-        node-version: '20'  # Adjust to match your package.json engines field
-        cache: 'npm'
-        cache-dependency-path: './frontend/package-lock.json'
+        dotnet-version: '9.0.x'
     
-    - name: Install dependencies
+    - name: Restore dependencies
       working-directory: ./frontend
-      run: npm ci
-    
-    - name: Lint (if configured)
-      working-directory: ./frontend
-      run: npm run lint --if-present || echo "No lint script found"
+      run: dotnet restore
     
     - name: Build
       working-directory: ./frontend
-      run: npm run build
+      run: dotnet build --no-restore --configuration Release
