@@ -11,12 +11,25 @@ public class AppDbContext : DbContext
 	public DbSet<Order> Orders => Set<Order>();
 	public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 	public DbSet<Payment> Payments => Set<Payment>();
+	public DbSet<User> Users => Set<User>();
 
 	protected override void OnModelCreating(ModelBuilder modelBuilder)
 	{
 		// Products
 		modelBuilder.Entity<Product>()
 			.HasIndex(p => p.Name);
+
+		// Users
+		modelBuilder.Entity<User>()
+			.HasIndex(u => u.Email)
+			.IsUnique();
+
+		// User -> Orders (1 to many)
+		modelBuilder.Entity<Order>()
+			.HasOne(o => o.User)
+			.WithMany(u => u.Orders)
+			.HasForeignKey(o => o.UserId)
+			.OnDelete(DeleteBehavior.Cascade);
 
 		// Order -> OrderItems (1 to many)
 		modelBuilder.Entity<OrderItem>()
