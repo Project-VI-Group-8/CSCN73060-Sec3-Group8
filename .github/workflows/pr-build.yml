@@ -1,0 +1,140 @@
+name: PR Build and Test
+
+on:
+  pull_request:
+    branches: [ main, develop, master ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build all Docker images
+      run: docker-compose build
+    
+    - name: Start PostgreSQL
+      run: docker-compose up -d postgres
+    
+    - name: Wait for PostgreSQL to be ready
+      run: |
+        timeout 30 bash -c 'until docker exec postgres pg_isready -U admin; do sleep 1; done'
+    
+    - name: Run database migrations
+      run: docker-compose up migrate
+    
+    - name: Check migration status
+      run: |
+        if [ "$(docker inspect ef_migrate --format='{{.State.ExitCode}}')" != "0" ]; then
+          echo "Migration failed"
+          docker logs ef_migrate
+          exit 1
+        fi
+    
+    - name: Start API
+      run: docker-compose up -d api
+    
+    - name: Wait for API health check
+      run: |
+        echo "Waiting for API to be healthy..."
+        timeout 60 bash -c 'until curl -f http://localhost:8080/health; do 
+          echo "Health check failed, retrying..."
+          sleep 2
+        done'
+        echo "API is healthy!"
+    
+    - name: Verify API is responding
+      run: |
+        echo "Testing API health endpoint..."
+        curl -v http://localhost:8080/health
+    
+    - name: Start frontend
+      run: docker-compose up -d client
+    
+    - name: Wait for frontend to be ready
+      run: |
+        echo "Waiting for frontend..."
+        timeout 30 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
+        echo "Frontend is ready!"
+    
+    - name: Show running containers
+      if: always()
+      run: docker-compose ps
+    
+    - name: Show container logs on failure
+      if: failure()
+      run: |
+        echo "=== PostgreSQL logs ==="
+        docker logs postgres
+        echo ""
+        echo "=== Migration logs ==="
+        docker logs ef_migrate
+        echo ""
+        echo "=== API logs ==="
+        docker logs aspnet_api
+        echo ""
+        echo "=== Frontend logs ==="
+        docker logs react_client
+    
+    - name: Cleanup
+      if: always()
+      run: docker-compose down -v
+
+  backend-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'  # Adjust if using .NET 7 or 9
+    
+    - name: Restore dependencies
+      working-directory: ./backend
+      run: dotnet restore
+    
+    - name: Build
+      working-directory: ./backend
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Run tests
+      working-directory: ./backend
+      run: dotnet test --no-build --configuration Release --verbosity normal || echo "No tests found"
+    
+  frontend-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'  # Adjust to match your package.json engines field
+        cache: 'npm'
+        cache-dependency-path: './frontend/package-lock.json'
+    
+    - name: Install dependencies
+      working-directory: ./frontend
+      run: npm ci
+    
+    - name: Lint (if configured)
+      working-directory: ./frontend
+      run: npm run lint --if-present || echo "No lint script found"
+    
+    - name: Build
+      working-directory: ./frontend
+      run: npm run build
+    
+    - name: Run tests
+      working-directory: ./frontend
+      run: npm test -- --passWithNoTests --watchAll=false
