@@ -1,5 +1,7 @@
 using backend;
 using backend.Data;
+using backend.Metrics;
+using backend.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using System.Reflection;
@@ -49,6 +51,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddHealthChecks()
     .AddNpgSql(builder.Configuration.GetConnectionString("Default")!);
 
+// Metrics (interval-only)
+builder.Services.AddSingleton<RequestMetrics>();
+builder.Services.AddHostedService<MetricsLoggingService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -59,6 +64,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // Configure request logging
+app.UseMiddleware<RequestMetricsMiddleware>();
 LoggingConfiguration.ConfigureRequestLogging(app);
 
 app.UseHttpsRedirection();

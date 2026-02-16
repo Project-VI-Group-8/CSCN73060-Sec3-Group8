@@ -9,9 +9,9 @@ public class Product
 	public int Id { get; set; }
 
 	[Required, MaxLength(200)]
-	public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
-	[Column(TypeName = "numeric(10,2)")]
+    [Column(TypeName = "numeric(10,2)")]
 	[Range(0, 9999999)]
 	public decimal Price { get; set; }
 
