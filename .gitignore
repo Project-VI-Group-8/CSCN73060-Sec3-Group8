@@ -416,3 +416,6 @@ FodyWeavers.xsd
 *.pdf
 backend/sdd.md
 backend/srs.md
+# Doxygen documentation
+backend/docs/
+docs/
