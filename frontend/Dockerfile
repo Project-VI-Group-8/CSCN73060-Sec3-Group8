@@ -1,19 +1,15 @@
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-COPY package*.json ./
-
-RUN npm ci
-
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
+COPY ["frontend.csproj", "./"]
+RUN dotnet restore "./frontend.csproj"
 COPY . .
+RUN dotnet build "frontend.csproj" -c Release -o /app/build
 
-RUN npm run build
+FROM build AS publish
+RUN dotnet publish "frontend.csproj" -c Release -o /app/publish
 
-FROM nginx:alpine
-
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "frontend.dll"]

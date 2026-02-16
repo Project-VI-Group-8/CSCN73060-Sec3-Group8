@@ -66,12 +66,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: react_client
+    container_name: razor_client
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "3000:8080"
     depends_on:
       - api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
 
 volumes:
   postgres_data:
