@@ -1,0 +1,1 @@
+// Order details page - shows detailed information about a specific order
