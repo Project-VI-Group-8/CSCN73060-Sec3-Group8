@@ -11,6 +11,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -37,11 +42,10 @@ services:
     environment:
       ConnectionStrings__Default: Host=postgres;Port=5432;Database=postgres;Username=admin;Password=admin123
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy 
     command: >
-      dotnet ef database update
-      --project ./backend.csproj
-      --connection "Host=postgres;Port=5432;Database=postgres;Username=admin;Password=admin123"
+        sh -c "sleep 5 && dotnet ef database update --project ./backend.csproj"
     working_dir: /src
 
   api:
@@ -66,12 +70,15 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: react_client
+    container_name: razor_client
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "3000:8080"
     depends_on:
       - api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
 
 volumes:
   postgres_data:
