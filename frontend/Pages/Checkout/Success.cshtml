@@ -1,0 +1,20 @@
+﻿@page
+@model frontend.Pages.Checkout.SuccessModel
+@{
+    ViewData["Title"] = "Order Success";
+}
+
+<div class="container mt-5 text-center">
+    <div class="card shadow-sm p-5">
+        <h1 class="text-success fw-bold">Order Placed Successfully!</h1>
+        <p class="mt-3 fs-5">
+            Thank you for shopping with <span class="fw-bold">VelocityRetail</span>.
+        </p>
+
+        <p class="text-muted">
+            Your order will be processed and shipped soon.
+        </p>
+
+        <a class="btn btn-primary mt-4 px-4" asp-page="/Products/Index">Continue Shopping</a>
+    </div>
+</div>

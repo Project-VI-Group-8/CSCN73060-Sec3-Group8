@@ -1,19 +1,31 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-
-namespace frontend.Pages;
+using frontend.Services;
 
 public class IndexModel : PageModel
 {
-    private readonly ILogger<IndexModel> _logger;
+    private readonly ApiService _api;
 
-    public IndexModel(ILogger<IndexModel> logger)
+    public IndexModel(ApiService api)
     {
-        _logger = logger;
+        _api = api;
     }
 
-    public void OnGet()
-    {
+    public List<ProductDto> FeaturedProducts { get; set; } = new();
 
+    public async Task OnGetAsync()
+    {
+        var products = await _api.GetAsync<List<ProductDto>>("/api/Products");
+
+        if (products != null)
+        {
+            FeaturedProducts = products.Take(8).ToList();
+        }
+    }
+
+    public class ProductDto
+    {
+        public int id { get; set; }
+        public string name { get; set; } = "";
+        public decimal price { get; set; }
     }
 }

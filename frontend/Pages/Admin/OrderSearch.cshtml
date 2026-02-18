@@ -1,0 +1,28 @@
+﻿@page
+@model frontend.Pages.Admin.OrderSearchModel
+
+<h2>Find Order By ID</h2>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <div>@error.ErrorMessage</div>
+        }
+    </div>
+}
+
+<form method="post" class="mb-4">
+    <label>Enter Order ID</label>
+    <input class="form-control" asp-for="OrderId" />
+    <button class="btn btn-dark mt-2">Search</button>
+</form>
+
+@if (Model.Order != null)
+{
+    <div class="card p-3 shadow-sm">
+        <h4>Order ID: @Model.Order.id</h4>
+        <p><strong>Status:</strong> @Model.Order.status</p>
+    </div>
+}

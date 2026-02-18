@@ -1,0 +1,28 @@
+﻿@page
+@model frontend.Pages.AdminAuth.LoginModel
+@{
+    ViewData["Title"] = "Admin Login";
+}
+
+<div class="card p-4 shadow-sm">
+    <h2 class="mb-3 text-center">Admin Login</h2>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <form method="post">
+        <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input class="form-control" asp-for="Username" required />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input class="form-control" asp-for="Password" type="password" required />
+        </div>
+
+        <button class="btn btn-primary w-100">Login</button>
+    </form>
+</div>

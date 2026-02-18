@@ -1,1 +1,31 @@
-@* Product listing page - displays all available products *@
+@page
+@model frontend.Pages.Products.IndexModel
+
+<h2 class="mb-4">All Products</h2>
+
+<div class="row g-4">
+    @foreach (var p in Model.Products)
+    {
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm h-100">
+
+                <img src="~/images/products/product_@(p.id).jpg"
+                     onerror="this.src='/images/products/default.png'"
+                     class="card-img-top"
+                     style="height:180px; object-fit:cover;" />
+
+                <div class="card-body">
+                    <h5>@p.name</h5>
+                    <p class="fw-bold">$@p.price</p>
+                    <p class="text-muted">Stock: @p.stockQty</p>
+
+                    <a class="btn btn-dark w-100"
+                       asp-page="/Products/Details"
+                       asp-route-id="@p.id">
+                        View
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

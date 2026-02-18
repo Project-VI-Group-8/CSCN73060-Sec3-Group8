@@ -1,0 +1,27 @@
+﻿@page
+@model frontend.Pages.Admin.IndexModel
+
+<h2 class="mb-4">Admin Dashboard</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm p-3">
+            <h4>Total Users</h4>
+            <h2 class="text-primary">@Model.TotalUsers</h2>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm p-3">
+            <h4>Total Orders</h4>
+            <h2 class="text-success">@Model.TotalOrders</h2>
+        </div>
+    </div>
+</div>
+
+<hr />
+
+<h4>Admin Tools</h4>
+
+<a asp-page="/Admin/OrderSearch" class="btn btn-dark me-2">View Order By ID</a>
+<a asp-page="/Admin/AddProduct" class="btn btn-success">Add Product</a>
