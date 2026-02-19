@@ -1,4 +1,5 @@
 using frontend.Services;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,12 +7,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddSession();
 // Register ApiService + HttpClient
-builder.Services.AddHttpClient<ApiService>(client =>
-{
-    //client.BaseAddress = new Uri("http://localhost:3000");
-    client.BaseAddress = new Uri("http://localhost:8080");
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(@"/app/DataProtectionKeys"));
 
-});
+builder.Services.AddHttpClient<ApiService>(client =>
+    {
+        var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:8080";
+        client.BaseAddress = new Uri(apiBaseUrl);
+    });
 
 var app = builder.Build();
 

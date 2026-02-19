@@ -74,12 +74,17 @@ services:
     restart: unless-stopped
     ports:
       - "3000:8080"
+    volumes:
+      - ./frontend/logs:/app/Logs
+      - dataprotection_keys:/app/DataProtectionKeys
     depends_on:
       - api
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
+      - ApiBaseUrl=http://api:8080
 
 volumes:
   postgres_data:
   pgadmin_data:
+  dataprotection_keys:
