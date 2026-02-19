@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-//username is admin, password is: admin123 
 namespace frontend.Pages.AdminAuth
 {
     public class LoginModel : PageModel
@@ -11,7 +10,7 @@ namespace frontend.Pages.AdminAuth
         [BindProperty]
         public string Password { get; set; }
 
-        public string ErrorMessage { get; set; }
+        public string? ErrorMessage { get; set; }
 
         public void OnGet()
         {

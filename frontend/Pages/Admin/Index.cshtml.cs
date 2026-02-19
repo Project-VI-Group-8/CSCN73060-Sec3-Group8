@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace frontend.Pages.Admin
 {
-
     public class IndexModel : PageModel
     {
         private readonly ApiService _api;
@@ -13,26 +12,14 @@ namespace frontend.Pages.Admin
         {
             _api = api;
         }
-        public IActionResult OnGet()
+        public async Task<IActionResult> OnGetAsync()
         {
-            if (HttpContext.Session.GetString("IsAdmin") != "true")
+            var isAdmin = HttpContext.Session.GetString("IsAdmin");
+            if (!String.Equals(isAdmin, "true", StringComparison.OrdinalIgnoreCase))
             {
                 return RedirectToPage("/AdminAuth/Login");
             }
-
             return Page();
-        }
-
-        public int TotalUsers { get; set; }
-        public int TotalOrders { get; set; }
-
-        public async Task OnGetAsync()
-        {
-            var users = await _api.GetAsync<List<object>>("/api/Users");
-            var orders = await _api.GetAsync<List<object>>("/api/Orders");
-
-            TotalUsers = users?.Count ?? 0;
-            TotalOrders = orders?.Count ?? 0;
         }
     }
 }

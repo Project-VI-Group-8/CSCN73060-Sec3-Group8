@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();
 // Register ApiService + HttpClient
 builder.Services.AddDataProtection()
@@ -30,10 +31,8 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 
-app.UseAuthorization();
 app.UseSession();
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
-app.UseStaticFiles();
 app.Run();
