@@ -183,6 +183,17 @@ public class ProductsController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>
+    /// Returns allowed HTTP methods for the Products resource
+    /// </summary>
+    /// <returns>200 OK with Allow header</returns>
+    [HttpOptions]
+    public IActionResult GetOptions()
+    {
+        Response.Headers.Append("Allow", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+        return Ok();
+    }
+
     private bool ProductExists(int id)
     {
         return _context.Products.Any(e => e.Id == id);
