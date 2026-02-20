@@ -105,6 +105,8 @@ public class TestingController : ControllerBase
 				Name = $"{adj} {noun} {_rng.Next(100, 999)}",
 				Price = Math.Round((decimal)(_rng.NextDouble() * 499 + 1), 2),
 				StockQty = _rng.Next(5, 500),
+				ImageData = GetRandomProductImage(),
+				ImageMimeType = "image/jpeg",
 				CreatedAt = DateTimeOffset.UtcNow,
 				UpdatedAt = DateTimeOffset.UtcNow
 			});
@@ -406,6 +408,19 @@ public class TestingController : ControllerBase
 			PaidOrders = await _db.Orders.CountAsync(o => o.Status == "PAID"),
 			VoidOrders = await _db.Orders.CountAsync(o => o.Status == "VOID")
 		});
+	}
+	
+	/// <summary>
+	/// Retrieves a random product image from the seed data directory.
+	/// </summary>
+	/// <returns>
+	/// A byte array containing the binary content of a randomly selected .jpg image.
+	/// </returns>
+	private static byte[] GetRandomProductImage()
+	{
+		var imageDir = Path.Combine(AppContext.BaseDirectory, "SeedData", "images");
+		var images = Directory.GetFiles(imageDir, "*.jpg");
+		return System.IO.File.ReadAllBytes(images[_rng.Next(images.Length)]);
 	}
 }
 

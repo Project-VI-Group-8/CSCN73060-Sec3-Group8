@@ -75,6 +75,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
+app.MapHealthChecks("api/health");
 
 // Ensure logs are flushed on shutdown
 app.Lifetime.ApplicationStopping.Register(Log.CloseAndFlush);
