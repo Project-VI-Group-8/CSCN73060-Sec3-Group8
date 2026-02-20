@@ -12,8 +12,13 @@ namespace frontend.Pages.AdminAuth
 
         public string? ErrorMessage { get; set; }
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
+            if (HttpContext.Session.GetString("IsAdmin") == "true")
+            {
+                return RedirectToPage("/Admin/Index");
+            }
+            return Page();
         }
 
         public IActionResult OnPost()
