@@ -1,0 +1,38 @@
+@page
+@model frontend.Pages.Products.UnoptimizedModel
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">All Products</h2>
+    <a href="/Products" class="btn btn-secondary btn-sm">Switch to Optimized</a>
+</div>
+
+<div class="row g-4">
+    @foreach (var p in Model.Products)
+    {
+        <div class="col-md-3 col-sm-6">
+            <div class="card shadow-sm h-100">
+
+                @if (!string.IsNullOrEmpty(p.imageData))
+                {
+                    <img src="data:@(p.imageMimeType ?? "image/jpeg");base64,@p.imageData"
+                         class="card-img-top"
+                         style="height:180px; object-fit:cover;"
+                         alt="@p.name" />
+                }
+                else
+                {
+                    <img src="/images/products/default.jpg"
+                         class="card-img-top"
+                         style="height:180px; object-fit:cover;"
+                         alt="@p.name" />
+                }
+
+                <div class="card-body">
+                    <h5>@p.name</h5>
+                    <p class="fw-bold">$@p.price</p>
+                    <p class="text-muted">Stock: @p.stockQty</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
