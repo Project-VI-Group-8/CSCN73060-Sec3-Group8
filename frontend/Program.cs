@@ -19,11 +19,9 @@ builder.Services.AddHttpClient<ApiService>(client =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -32,6 +30,22 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseSession();
+
+/// <summary>
+/// Fetches a product image from the backend and streams it to the browser.
+/// Acts as a pass-through so image requests always go through the frontend server,
+/// making the site work correctly from any machine on the network.
+/// </summary>
+app.MapGet("/api/proxy/image/{id:int}", async (int id, ApiService api) =>
+{
+    var response = await api.GetRawAsync($"/api/products/{id}/image");
+    if (!response.IsSuccessStatusCode)
+        return Results.NotFound();
+    var contentType = response.Content.Headers.ContentType?.ToString() ?? "image/jpeg";
+    var stream = await response.Content.ReadAsStreamAsync();
+    return Results.Stream(stream, contentType);
+});
+
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
