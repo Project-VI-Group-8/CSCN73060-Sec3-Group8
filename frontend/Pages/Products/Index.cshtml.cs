@@ -27,6 +27,8 @@ namespace frontend.Pages.Products
             public string name { get; set; } = "";
             public decimal price { get; set; }
             public int stockQty { get; set; }
+            public bool hasImage { get; set; }
+            public string? imageMimeType { get; set; }
         }
     }
 }

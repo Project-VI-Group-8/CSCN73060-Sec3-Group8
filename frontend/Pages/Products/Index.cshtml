@@ -1,7 +1,10 @@
 @page
 @model frontend.Pages.Products.IndexModel
 
-<h2 class="mb-4">All Products</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">All Products</h2>
+    <a href="/Products/Unoptimized" class="btn btn-secondary btn-sm">Switch to Unoptimized</a>
+</div>
 
 <div class="row g-4">
     @foreach (var p in Model.Products)
@@ -9,10 +12,21 @@
         <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm h-100">
 
-                <img src="~/images/products/product_@(p.id).jpg"
-                     onerror="this.src='/images/products/default.jpg'"
-                     class="card-img-top"
-                     style="height:180px; object-fit:cover;" />
+                @if (p.hasImage)
+                {
+                    <img src="/api/proxy/image/@(p.id)"
+                         loading="lazy"
+                         class="card-img-top"
+                         style="height:180px; object-fit:cover;"
+                         alt="@p.name" />
+                }
+                else
+                {
+                    <img src="/images/products/default.jpg"
+                         class="card-img-top"
+                         style="height:180px; object-fit:cover;"
+                         alt="@p.name" />
+                }
 
                 <div class="card-body">
                     <h5>@p.name</h5>
