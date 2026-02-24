@@ -1,1 +1,88 @@
-@* Login page - allows existing users to sign in with email and password *@
+@* Combined Login & Sign Up page with Bootstrap tabs + Admin login link *@
+@page
+@model frontend.Pages.Account.LoginModel
+@using Microsoft.AspNetCore.Http
+@{
+    ViewData["Title"] = "Account";
+}
+
+@if (Model.IsLoggedIn)
+{
+    <div class="container mt-5 text-center">
+        <p>You are already logged in.</p>
+        @if (Model.IsAdmin)
+        {
+            <a class="btn btn-primary" asp-page="/Admin/Index">Go to Admin</a>
+        }
+        else
+        {
+            <a class="btn btn-primary" asp-page="/Account/Profile">Go to Profile</a>
+        }
+        <a class="btn btn-outline-secondary ms-2" asp-page="/Account/Logout">Log Out</a>
+    </div>
+}
+else
+{
+    <div class="container mt-5" style="max-width: 500px;">
+        <ul class="nav nav-tabs mb-4" id="accountTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(Model.ActiveTab == "login" ? "active" : "")"
+                        id="login-tab" data-bs-toggle="tab" data-bs-target="#loginPane"
+                        type="button" role="tab">Log In</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(Model.ActiveTab == "signup" ? "active" : "")"
+                        id="signup-tab" data-bs-toggle="tab" data-bs-target="#signupPane"
+                        type="button" role="tab">Sign Up</button>
+            </li>
+        </ul>
+
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+        <div class="tab-content">
+            @* ── LOG IN TAB ── *@
+            <div class="tab-pane fade @(Model.ActiveTab == "login" ? "show active" : "")"
+                 id="loginPane" role="tabpanel">
+                <div class="card shadow-sm p-4">
+                    <form method="post" asp-page-handler="Login">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email Address</label>
+                            <input type="email" class="form-control" asp-for="LoginEmail" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Log In</button>
+                    </form>
+                </div>
+            </div>
+
+            @* ── SIGN UP TAB ── *@
+            <div class="tab-pane fade @(Model.ActiveTab == "signup" ? "show active" : "")"
+                 id="signupPane" role="tabpanel">
+                <div class="card shadow-sm p-4">
+                    <form method="post" asp-page-handler="SignUp">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Full Name</label>
+                            <input type="text" class="form-control" asp-for="SignUpName" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Email Address</label>
+                            <input type="email" class="form-control" asp-for="SignUpEmail" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Address</label>
+                            <textarea class="form-control" asp-for="SignUpAddress" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        @* ── Admin Login Link ── *@
+        <div class="text-center mt-4">
+            <small class="text-muted">
+                Are you an administrator?
+                <a asp-page="/AdminAuth/Login" class="text-warning fw-semibold">Admin Login</a>
+            </small>
+        </div>
+    </div>
+}

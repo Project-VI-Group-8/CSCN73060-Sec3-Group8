@@ -1,1 +1,66 @@
-@* User profile page - view and edit user account information *@
+@* User profile page - view user account information and order history *@
+@page
+@model frontend.Pages.Account.ProfileModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="container mt-5">
+    <h2 class="fw-bold mb-4">My Profile</h2>
+
+    <div class="card shadow-sm p-4 mb-4">
+        <h5 class="fw-semibold">Account Information</h5>
+        <p class="mb-1"><strong>Name:</strong> @Model.UserName</p>
+        <p class="mb-0"><strong>Email:</strong> @Model.UserEmail</p>
+    </div>
+
+    <h4 class="fw-bold mb-3">Order History</h4>
+
+    @if (!Model.Orders.Any())
+    {
+        <div class="alert alert-info">You haven't placed any orders yet.</div>
+    }
+    else
+    {
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model.Orders)
+                {
+                    <tr>
+                        <td>
+                            <a asp-page="/Orders/Details" asp-route-id="@order.Id">
+                                @order.Id.ToString()[..8]…
+                            </a>
+                        </td>
+                        <td>@order.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")</td>
+                        <td>
+                            @if (order.Status == "PAID")
+                            {
+                                <span class="badge bg-success">@order.Status</span>
+                            }
+                            else if (order.Status == "PENDING")
+                            {
+                                <span class="badge bg-warning text-dark">@order.Status</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@order.Status</span>
+                            }
+                        </td>
+                        <td>@order.Items.Sum(i => i.Quantity)</td>
+                        <td>$@order.Items.Sum(i => i.Quantity * i.UnitPrice).ToString("F2")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

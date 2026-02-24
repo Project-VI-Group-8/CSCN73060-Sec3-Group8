@@ -31,6 +31,7 @@ public class OrdersController : ControllerBase
 	{
 		var orders = await _db.Orders
 			.Include(o => o.Items)
+				.ThenInclude(i => i.Product)
 			.Include(o => o.Payment)
 			.OrderByDescending(o => o.CreatedAt)
 			.ToListAsync();
@@ -52,6 +53,7 @@ public class OrdersController : ControllerBase
 	{
 		var order = await _db.Orders
 			.Include(o => o.Items)
+				.ThenInclude(i => i.Product)
 			.Include(o => o.Payment)
 			.FirstOrDefaultAsync(o => o.Id == id);
 
@@ -176,17 +178,21 @@ public class OrdersController : ControllerBase
 					new { error = "Payment verification failed." });
 			}
 
-			// Atomically decrement stock
+			// Atomically decrement stock at the database level
 			foreach (var item in order.Items)
 			{
-				var product = await _db.Products.FindAsync(item.ProductId);
-				if (product is null || product.StockQty < item.Quantity)
+				int rowsAffected = await _db.Products
+					.Where(p => p.Id == item.ProductId && p.StockQty >= item.Quantity)
+					.ExecuteUpdateAsync(s => s
+						.SetProperty(p => p.StockQty, p => p.StockQty - item.Quantity)
+						.SetProperty(p => p.UpdatedAt, _ => DateTimeOffset.UtcNow));
+
+				if (rowsAffected == 0)
 				{
 					await transaction.RollbackAsync();
 					return Conflict(new { error = $"Insufficient stock for product {item.ProductId}." });
 				}
-				product.StockQty -= item.Quantity;
-				product.UpdatedAt = DateTimeOffset.UtcNow;
+
 				item.Status = "CONFIRMED";
 			}
 

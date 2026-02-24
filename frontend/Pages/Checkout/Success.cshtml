@@ -11,6 +11,13 @@
             Thank you for shopping with <span class="fw-bold">VelocityRetail</span>.
         </p>
 
+        @if (!string.IsNullOrEmpty(Model.OrderId))
+        {
+            <p class="mt-2 fs-6">
+                Your Order ID: <strong class="text-primary">@Model.OrderId</strong>
+            </p>
+        }
+
         <p class="text-muted">
             Your order will be processed and shipped soon.
         </p>

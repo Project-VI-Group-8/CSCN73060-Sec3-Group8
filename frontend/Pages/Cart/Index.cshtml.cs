@@ -1,4 +1,4 @@
-// Shopping cart page - displays items added to cart and allows quantity updates
+// Shopping cart page - displays items added to cart and allows removal
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using frontend.Helpers;

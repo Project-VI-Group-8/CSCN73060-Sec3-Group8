@@ -36,8 +36,6 @@
                         <a class="nav-link @(currentPage == "/Index" ? "active" : "")" asp-page="/Index">
                             Home
                         </a>
-
-
                     </li>
 
                     <li class="nav-item">
@@ -56,26 +54,43 @@
 
                     @using Microsoft.AspNetCore.Http
 
+                    @* ── Auth: 3 states ── *@
                     @if (Context.Session.GetString("IsAdmin") == "true")
                     {
+                        @* Admin is logged in *@
                         <li class="nav-item">
                             <a class="nav-link text-warning fw-bold @(currentPage != null && currentPage.StartsWith("/Admin") ? "active" : "")"
                                asp-page="/Admin/Index">
                                 Admin
                             </a>
                         </li>
-
                         <li class="nav-item">
-                            <a class="nav-link text-light fw-bold" asp-page="/AdminAuth/Logout">Logout</a>
+                            <a class="nav-link" asp-page="/Account/Logout">Log Out</a>
+                        </li>
+                    }
+                    else if (!string.IsNullOrEmpty(Context.Session.GetString("UserId")))
+                    {
+                        @* User is logged in *@
+                        <li class="nav-item">
+                            <a class="nav-link @(currentPage != null && currentPage.StartsWith("/Account/Profile") ? "active" : "")"
+                               asp-page="/Account/Profile">
+                                <span class="text-info">@Context.Session.GetString("UserName")</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Account/Logout">Log Out</a>
                         </li>
                     }
                     else
                     {
+                        @* Not logged in *@
                         <li class="nav-item">
-                            <a class="nav-link text-warning fw-bold" asp-page="/AdminAuth/Login">Admin Login</a>
+                            <a class="nav-link @(currentPage != null && currentPage.StartsWith("/Account") ? "active" : "")"
+                               asp-page="/Account/Login">
+                                Account
+                            </a>
                         </li>
                     }
-
 
                 </ul>
             </div>
@@ -103,4 +118,3 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
-

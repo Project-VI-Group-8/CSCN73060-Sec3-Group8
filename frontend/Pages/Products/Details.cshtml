@@ -31,10 +31,14 @@ else
             <h4 class="text-success">$@Model.Product.price</h4>
             <p class="text-muted">Stock Available: @Model.Product.stockQty</p>
 
-            <form method="post">
+            <form method="post" class="d-flex align-items-center gap-2 mt-3">
                 <input type="hidden" name="id" value="@Model.Product.id" />
                 <input type="hidden" name="name" value="@Model.Product.name" />
                 <input type="hidden" name="price" value="@Model.Product.price" />
+
+                <label class="form-label mb-0 fw-semibold">Qty:</label>
+                <input type="number" name="quantity" value="1" min="1"
+                       max="@Model.Product.stockQty" class="form-control" style="width:80px;" />
 
                 <button type="submit"
                         asp-page-handler="AddToCart"
@@ -46,10 +50,6 @@ else
                     Back
                 </a>
             </form>
-
-            <a asp-page="/Products/Index" class="btn btn-outline-dark ms-2">
-                Back
-            </a>
         </div>
     </div>
 }

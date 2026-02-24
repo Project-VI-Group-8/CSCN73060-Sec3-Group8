@@ -28,21 +28,23 @@ namespace frontend.Pages.Products
             return Page();
         }
 
-        public IActionResult OnPostAddToCart(int id, string name, decimal price)
+        public IActionResult OnPostAddToCart(int id, string name, decimal price, int quantity = 1)
         {
+            if (quantity < 1) quantity = 1;
+
             var cart = HttpContext.Session.GetObject<List<CartItem>>("cart") ?? new List<CartItem>();
 
             var existing = cart.FirstOrDefault(x => x.ProductId == id);
 
             if (existing != null)
-                existing.Quantity++;
+                existing.Quantity += quantity;
             else
                 cart.Add(new CartItem
                 {
                     ProductId = id,
                     Name = name,
                     Price = price,
-                    Quantity = 1
+                    Quantity = quantity
                 });
 
             HttpContext.Session.SetObject("cart", cart);

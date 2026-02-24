@@ -1,19 +1,365 @@
 ﻿@page
 @model frontend.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
 
-<h2 class="mb-4">Admin Dashboard</h2>
+<h2 class="mb-2">Admin Dashboard</h2>
 
-<div class="row">
-    <div class="col-md-12">
-        <div class="card shadow-sm p-3">
-            <p class="text-muted">Welcome, Admin.</p>
+@* ── Result Banner ── *@
+@if (Model.ResultMessage != null)
+{
+    <div class="alert @(Model.IsSuccess ? "alert-success" : "alert-danger") alert-dismissible fade show mb-3">
+        @Model.ResultMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@* ── Tabs ── *@
+<ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item">
+        <button class="nav-link @(Model.ActiveTab == "users" ? "active" : "")"
+                data-bs-toggle="tab" data-bs-target="#usersTab" type="button">Users</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link @(Model.ActiveTab == "products" ? "active" : "")"
+                data-bs-toggle="tab" data-bs-target="#productsTab" type="button">Products</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link @(Model.ActiveTab == "orders" ? "active" : "")"
+                data-bs-toggle="tab" data-bs-target="#ordersTab" type="button">Orders</button>
+    </li>
+</ul>
+
+<div class="tab-content border border-top-0 rounded-bottom p-4 bg-white shadow-sm">
+
+    @* ═══════════════════ USERS TAB ═══════════════════ *@
+    <div class="tab-pane fade @(Model.ActiveTab == "users" ? "show active" : "")" id="usersTab">
+
+        <div class="d-flex align-items-center mb-3">
+            <h5 class="mb-0 me-3">All Users</h5>
+            <form method="post">
+                <button class="btn btn-outline-success btn-sm" asp-page-handler="GetUsers">
+                    <span class="badge bg-success me-1">GET</span> Load Users
+                </button>
+            </form>
+        </div>
+
+        @if (Model.Users != null)
+        {
+            <div class="table-responsive mb-4" style="max-height:250px; overflow-y:auto;">
+                <table class="table table-sm table-striped mb-0">
+                    <thead class="table-dark sticky-top">
+                        <tr><th>ID (GUID)</th><th>Name</th><th>Email</th><th>Address</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in Model.Users)
+                        {
+                            <tr>
+                                <td><code class="small">@u.Id</code></td>
+                                <td>@u.Name</td>
+                                <td>@u.Email</td>
+                                <td>@(u.Address ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <hr />
+        <div class="row g-4">
+
+            @* Create User (POST) *@
+            <div class="col-lg-4">
+                <div class="card p-3 h-100">
+                    <h6 class="fw-bold mb-3">Create User <span class="badge bg-primary">POST</span></h6>
+                    <form method="post" asp-page-handler="CreateUser">
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Name</label>
+                            <input class="form-control form-control-sm" asp-for="CreateUserName" required />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Email</label>
+                            <input class="form-control form-control-sm" asp-for="CreateUserEmail" type="email" required />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Address</label>
+                            <input class="form-control form-control-sm" asp-for="CreateUserAddress" />
+                        </div>
+                        <button class="btn btn-primary btn-sm w-100">Create User</button>
+                    </form>
+                </div>
+            </div>
+
+            @* Update User Name (PATCH) *@
+            <div class="col-lg-4">
+                <div class="card p-3 h-100">
+                    <h6 class="fw-bold mb-3">Update User Name <span class="badge bg-info text-dark">PATCH</span></h6>
+                    <form method="post" asp-page-handler="UpdateUserName">
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">User ID</label>
+                            <input class="form-control form-control-sm" asp-for="PatchUserId" required />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">New Name</label>
+                            <input class="form-control form-control-sm" asp-for="PatchUserName" required />
+                        </div>
+                        <button class="btn btn-info btn-sm w-100">Update Name</button>
+                    </form>
+                </div>
+            </div>
+
+            @* Delete User (DELETE) *@
+            <div class="col-lg-4">
+                <div class="card p-3 h-100">
+                    <h6 class="fw-bold mb-3">Delete User <span class="badge bg-danger">DELETE</span></h6>
+                    <form method="post" asp-page-handler="DeleteUser">
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">User ID</label>
+                            <input class="form-control form-control-sm" asp-for="DeleteUserId" required />
+                        </div>
+                        <button class="btn btn-danger btn-sm w-100">Delete User</button>
+                    </form>
+                </div>
+            </div>
+
         </div>
     </div>
+
+    @* ═══════════════════ PRODUCTS TAB ═══════════════════ *@
+    <div class="tab-pane fade @(Model.ActiveTab == "products" ? "show active" : "")" id="productsTab">
+
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <h5 class="mb-0 me-2">All Products</h5>
+            <form method="post">
+                <button class="btn btn-outline-success btn-sm" asp-page-handler="GetProducts">
+                    <span class="badge bg-success me-1">GET</span> Load Products
+                </button>
+            </form>
+            <form method="post">
+                <button class="btn btn-outline-secondary btn-sm" asp-page-handler="Options">
+                    <span class="badge bg-secondary me-1">OPTIONS</span> Allowed Methods
+                </button>
+            </form>
+        </div>
+
+        @if (Model.OptionsResult != null)
+        {
+            <div class="alert alert-secondary py-2 small">
+                <strong>OPTIONS /api/Products</strong> &rarr; Allow: @Model.OptionsResult
+            </div>
+        }
+
+        @if (Model.Products != null)
+        {
+            <div class="table-responsive mb-4" style="max-height:250px; overflow-y:auto;">
+                <table class="table table-sm table-striped mb-0">
+                    <thead class="table-dark sticky-top">
+                        <tr><th>ID</th><th>Name</th><th>Price</th><th>Stock</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.Products)
+                        {
+                            <tr>
+                                <td>@p.Id</td>
+                                <td>@p.Name</td>
+                                <td>$@p.Price.ToString("F2")</td>
+                                <td>@p.StockQty</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <hr />
+        <div class="row g-4">
+
+            @* Add Product (POST) *@
+            <div class="col-lg-6">
+                <div class="card p-3 h-100">
+                    <h6 class="fw-bold mb-3">Add Product <span class="badge bg-primary">POST</span></h6>
+                    <form method="post" asp-page-handler="AddProduct">
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Product Name</label>
+                            <input class="form-control form-control-sm" asp-for="NewProductName" required />
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col">
+                                <label class="form-label small fw-semibold">Price</label>
+                                <input class="form-control form-control-sm" asp-for="NewProductPrice" type="number" step="0.01" min="0.01" required />
+                            </div>
+                            <div class="col">
+                                <label class="form-label small fw-semibold">Stock Qty</label>
+                                <input class="form-control form-control-sm" asp-for="NewProductStock" type="number" min="0" required />
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-sm w-100">Add Product</button>
+                    </form>
+                </div>
+            </div>
+
+            @* Adjust Price (PUT) *@
+            <div class="col-lg-6">
+                <div class="card p-3 h-100">
+                    <h6 class="fw-bold mb-3">Adjust Price <span class="badge bg-warning text-dark">PUT</span></h6>
+                    <form method="post" asp-page-handler="AdjustPrice">
+                        <div class="row g-2 mb-2">
+                            <div class="col">
+                                <label class="form-label small fw-semibold">Product ID</label>
+                                <input class="form-control form-control-sm" asp-for="AdjustPriceProductId" type="number" min="1" required />
+                            </div>
+                            <div class="col">
+                                <label class="form-label small fw-semibold">New Price</label>
+                                <input class="form-control form-control-sm" asp-for="AdjustPriceValue" type="number" step="0.01" min="0.01" required />
+                            </div>
+                        </div>
+                        <button class="btn btn-warning btn-sm w-100">Update Price</button>
+                    </form>
+                </div>
+            </div>
+
+            @* Adjust Stock (PATCH) *@
+            <div class="col-lg-6">
+                <div class="card p-3 h-100">
+                    <h6 class="fw-bold mb-3">Adjust Stock <span class="badge bg-info text-dark">PATCH</span></h6>
+                    <form method="post" asp-page-handler="AdjustStock">
+                        <div class="row g-2 mb-2">
+                            <div class="col">
+                                <label class="form-label small fw-semibold">Product ID</label>
+                                <input class="form-control form-control-sm" asp-for="AdjustStockProductId" type="number" min="1" required />
+                            </div>
+                            <div class="col">
+                                <label class="form-label small fw-semibold">New Stock Qty</label>
+                                <input class="form-control form-control-sm" asp-for="AdjustStockValue" type="number" min="0" required />
+                            </div>
+                        </div>
+                        <button class="btn btn-info btn-sm w-100">Update Stock</button>
+                    </form>
+                </div>
+            </div>
+
+            @* Replace Product (PUT) *@
+            <div class="col-lg-6">
+                <div class="card p-3 h-100">
+                    <h6 class="fw-bold mb-3">Replace Product <span class="badge bg-warning text-dark">PUT</span></h6>
+                    <form method="post" asp-page-handler="ReplaceProduct">
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Product ID</label>
+                            <input class="form-control form-control-sm" asp-for="ReplaceProductId" type="number" min="1" required />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">New Name</label>
+                            <input class="form-control form-control-sm" asp-for="ReplaceProductName" required />
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col">
+                                <label class="form-label small fw-semibold">New Price</label>
+                                <input class="form-control form-control-sm" asp-for="ReplaceProductPrice" type="number" step="0.01" min="0.01" required />
+                            </div>
+                            <div class="col">
+                                <label class="form-label small fw-semibold">New Stock Qty</label>
+                                <input class="form-control form-control-sm" asp-for="ReplaceProductStock" type="number" min="0" required />
+                            </div>
+                        </div>
+                        <button class="btn btn-warning btn-sm w-100">Replace Product</button>
+                    </form>
+                </div>
+            </div>
+
+            @* Delete Product (DELETE) *@
+            <div class="col-lg-6">
+                <div class="card p-3 h-100">
+                    <h6 class="fw-bold mb-3">Delete Product <span class="badge bg-danger">DELETE</span></h6>
+                    <form method="post" asp-page-handler="DeleteProduct">
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Product ID</label>
+                            <input class="form-control form-control-sm" asp-for="DeleteProductId" type="number" min="1" required />
+                        </div>
+                        <button class="btn btn-danger btn-sm w-100">Delete Product</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    @* ═══════════════════ ORDERS TAB ═══════════════════ *@
+    <div class="tab-pane fade @(Model.ActiveTab == "orders" ? "show active" : "")" id="ordersTab">
+
+        <div class="d-flex align-items-center mb-3">
+            <h5 class="mb-0 me-3">All Orders</h5>
+            <form method="post">
+                <button class="btn btn-outline-success btn-sm" asp-page-handler="GetOrders">
+                    <span class="badge bg-success me-1">GET</span> Load Orders
+                </button>
+            </form>
+        </div>
+
+        @if (Model.Orders != null)
+        {
+            <div class="table-responsive mb-4" style="max-height:250px; overflow-y:auto;">
+                <table class="table table-sm table-striped mb-0">
+                    <thead class="table-dark sticky-top">
+                        <tr><th>Order ID (GUID)</th><th>User ID</th><th>Status</th><th>Total</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var o in Model.Orders)
+                        {
+                            <tr>
+                                <td><code class="small">@o.Id</code></td>
+                                <td><code class="small">@o.UserId</code></td>
+                                <td>@o.Status</td>
+                                <td>$@o.Total.ToString("F2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <hr />
+        <div class="row g-4">
+
+            @* Update Order Status (PUT) *@
+            <div class="col-lg-6">
+                <div class="card p-3 h-100">
+                    <h6 class="fw-bold mb-3">Update Order Status <span class="badge bg-warning text-dark">PUT</span></h6>
+                    <form method="post" asp-page-handler="UpdateOrderStatus">
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Order ID</label>
+                            <input class="form-control form-control-sm" asp-for="UpdateOrderId" required />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">New Status</label>
+                            <select class="form-select form-select-sm" asp-for="UpdateOrderStatus" required>
+                                <option value="">-- Select Status --</option>
+                                <option value="PENDING">PENDING</option>
+                                <option value="PAID">PAID</option>
+                                <option value="VOID">VOID</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-warning btn-sm w-100">Update Status</button>
+                    </form>
+                </div>
+            </div>
+
+            @* Delete Order (DELETE) *@
+            <div class="col-lg-6">
+                <div class="card p-3 h-100">
+                    <h6 class="fw-bold mb-3">Delete Order <span class="badge bg-danger">DELETE</span></h6>
+                    <form method="post" asp-page-handler="DeleteOrder">
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Order ID</label>
+                            <input class="form-control form-control-sm" asp-for="DeleteOrderId" required />
+                        </div>
+                        <button class="btn btn-danger btn-sm w-100">Delete Order</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
 </div>
-
-<hr />
-
-<h4>Admin Tools</h4>
-
-<a asp-page="/Admin/OrderSearch" class="btn btn-dark me-2">View Order By ID</a>
-<a asp-page="/Admin/AddProduct" class="btn btn-success">Add Product</a>

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using frontend.Helpers;
+
 namespace frontend.Pages.AdminAuth
 {
     public class LoginModel : PageModel
@@ -14,7 +16,7 @@ namespace frontend.Pages.AdminAuth
 
         public IActionResult OnGet()
         {
-            if (HttpContext.Session.GetString("IsAdmin") == "true")
+            if (HttpContext.Session.GetString(SessionKeys.IsAdmin) == "true")
             {
                 return RedirectToPage("/Admin/Index");
             }
@@ -26,7 +28,7 @@ namespace frontend.Pages.AdminAuth
             // Hardcoded credentials (simple for project)
             if (Username == "admin" && Password == "admin123")
             {
-                HttpContext.Session.SetString("IsAdmin", "true");
+                HttpContext.Session.LoginAdmin(); // Clears user session automatically
                 return RedirectToPage("/Admin/Index");
             }
 
@@ -35,4 +37,3 @@ namespace frontend.Pages.AdminAuth
         }
     }
 }
-

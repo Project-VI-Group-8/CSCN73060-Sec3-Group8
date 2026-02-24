@@ -21,6 +21,31 @@ namespace frontend.Services
             return await _http.PostAsJsonAsync(url, data);
         }
 
+        public async Task<HttpResponseMessage> PutAsync<T>(string url, T data)
+        {
+            return await _http.PutAsJsonAsync(url, data);
+        }
+
+        public async Task<HttpResponseMessage> PatchAsync<T>(string url, T data)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Patch, url)
+            {
+                Content = JsonContent.Create(data)
+            };
+            return await _http.SendAsync(request);
+        }
+
+        public async Task<HttpResponseMessage> DeleteAsync(string url)
+        {
+            return await _http.DeleteAsync(url);
+        }
+
+        public async Task<HttpResponseMessage> OptionsAsync(string url)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Options, url);
+            return await _http.SendAsync(request);
+        }
+
         public async Task<HttpResponseMessage> GetRawAsync(string url)
         {
             return await _http.GetAsync(url);

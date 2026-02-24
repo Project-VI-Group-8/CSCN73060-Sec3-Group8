@@ -27,7 +27,7 @@ public class ProductsController : ControllerBase
     public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
     {
         return await _context.Products
-            .OrderBy(p => p.Name)
+            .OrderBy(p => p.Id)
             .Select(p => new ProductDto
             {
                 Id = p.Id,
