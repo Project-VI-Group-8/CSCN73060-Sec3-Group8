@@ -31,6 +31,7 @@ public class OrdersController : ControllerBase
 	{
 		var orders = await _db.Orders
 			.Include(o => o.Items)
+				.ThenInclude(i => i.Product)
 			.Include(o => o.Payment)
 			.OrderByDescending(o => o.CreatedAt)
 			.ToListAsync();
@@ -52,6 +53,7 @@ public class OrdersController : ControllerBase
 	{
 		var order = await _db.Orders
 			.Include(o => o.Items)
+				.ThenInclude(i => i.Product)
 			.Include(o => o.Payment)
 			.FirstOrDefaultAsync(o => o.Id == id);
 

@@ -1,3 +1,4 @@
+// Admin logout - redirects to shared logout which clears all session keys
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -7,9 +8,8 @@ namespace frontend.Pages.AdminAuth
     {
         public IActionResult OnGet()
         {
-            HttpContext.Session.Remove("IsAdmin");
-            return RedirectToPage("/Index");
+            // Redirect to the shared logout endpoint
+            return RedirectToPage("/Account/Logout");
         }
     }
 }
-

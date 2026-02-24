@@ -1,1 +1,96 @@
 @* Order details page - shows detailed information about a specific order *@
+@page "{id:guid}"
+@model frontend.Pages.Orders.DetailsModel
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<div class="container mt-5">
+    <a class="btn btn-outline-secondary mb-4" asp-page="/Account/Profile">&larr; Back to Profile</a>
+
+    @if (Model.Order == null)
+    {
+        <div class="alert alert-warning">Order not found.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm p-4 mb-4">
+            <h3 class="fw-bold">Order Details</h3>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <p><strong>Order ID:</strong> <code>@Model.Order.Id</code></p>
+                    <p><strong>Date:</strong> @Model.Order.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")</p>
+                </div>
+                <div class="col-md-6">
+                    <p>
+                        <strong>Status:</strong>
+                        @if (Model.Order.Status == "PAID")
+                        {
+                            <span class="badge bg-success">@Model.Order.Status</span>
+                        }
+                        else if (Model.Order.Status == "PENDING")
+                        {
+                            <span class="badge bg-warning text-dark">@Model.Order.Status</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">@Model.Order.Status</span>
+                        }
+                    </p>
+                    @if (Model.Order.Payment != null)
+                    {
+                        <p>
+                            <strong>Payment:</strong>
+                            <span class="badge bg-info text-dark">@Model.Order.Payment.Status</span>
+                            @if (Model.Order.Payment.PaidAt.HasValue)
+                            {
+                                <span class="text-muted ms-2">@Model.Order.Payment.PaidAt.Value.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")</span>
+                            }
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <h4 class="fw-bold mb-3">Items</h4>
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Line Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Order.Items)
+                {
+                    <tr>
+                        <td>@(item.Product?.Name ?? $"Product #{item.ProductId}")</td>
+                        <td>@item.Quantity</td>
+                        <td>$@item.UnitPrice.ToString("F2")</td>
+                        <td>$@((item.Quantity * item.UnitPrice).ToString("F2"))</td>
+                        <td>
+                            @if (item.Status == "CONFIRMED")
+                            {
+                                <span class="badge bg-success">@item.Status</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@item.Status</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="table-active fw-bold">
+                    <td colspan="3" class="text-end">Order Total:</td>
+                    <td>$@Model.Order.Items.Sum(i => i.Quantity * i.UnitPrice).ToString("F2")</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    }
+</div>
