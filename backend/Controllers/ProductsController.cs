@@ -24,9 +24,20 @@ public class ProductsController : ControllerBase
     /// </summary>
     /// <returns>List of all products</returns>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
     {
-        return await _context.Products.OrderBy(p => p.Name).ToListAsync();
+        return await _context.Products
+            .OrderBy(p => p.Name)
+            .Select(p => new ProductDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                StockQty = p.StockQty,
+                HasImage = p.ImageData != null,
+                ImageMimeType = p.ImageMimeType
+            })
+            .ToListAsync();
     }
 
     /// <summary>
@@ -35,7 +46,7 @@ public class ProductsController : ControllerBase
     /// <param name="id">Product ID</param>
     /// <returns>Product details</returns>
     [HttpGet("{id}")]
-    public async Task<ActionResult<Product>> GetProduct(int id)
+    public async Task<ActionResult<ProductDto>> GetProduct(int id)
     {
         var product = await _context.Products.FindAsync(id);
 
@@ -44,7 +55,25 @@ public class ProductsController : ControllerBase
             return NotFound(new { message = $"Product with ID {id} not found" });
         }
 
-        return product;
+        return ToDto(product);
+    }
+    
+    /// <summary>
+    /// Returns the image for a product
+    /// </summary>
+    /// <param name="id">Product ID</param>
+    /// <returns>Image file</returns>
+    [HttpGet("{id}/image")]
+    public async Task<IActionResult> GetProductImage(int id)
+    {
+        var product = await _context.Products
+            .Where(p => p.Id == id)
+            .Select(p => new { p.ImageData, p.ImageMimeType })
+            .FirstOrDefaultAsync();
+
+        if (product == null) return NotFound(new { message = $"Product with ID {id} not found" });
+        if (product.ImageData == null) return NotFound(new { message = $"Product {id} has no image" });
+        return File(product.ImageData, product.ImageMimeType!);
     }
 
     /// <summary>
@@ -198,6 +227,22 @@ public class ProductsController : ControllerBase
     {
         return _context.Products.Any(e => e.Id == id);
     }
+    
+    /// <summary>
+    /// Maps a Product entity to a ProductDto
+    /// </summary>
+    private static ProductDto ToDto(Product product)
+    {
+        return new ProductDto
+        {
+            Id = product.Id,
+            Name = product.Name,
+            Price = product.Price,
+            StockQty = product.StockQty,
+            HasImage = product.ImageData != null,
+            ImageMimeType = product.ImageMimeType
+        };
+    }
 }
 
 /// <summary>
@@ -209,4 +254,14 @@ public class UpdateStockRequest
     /// New stock quantity
     /// </summary>
     public int StockQty { get; set; }
+}
+
+public class ProductDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public int StockQty { get; set; }
+    public bool HasImage { get; set; }
+    public string? ImageMimeType { get; set; }    
 }

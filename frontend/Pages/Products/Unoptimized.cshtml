@@ -1,9 +1,9 @@
 @page
-@model frontend.Pages.Products.IndexModel
+@model frontend.Pages.Products.UnoptimizedModel
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">All Products</h2>
-    <a href="/Products/Unoptimized" class="btn btn-secondary btn-sm">Switch to Unoptimized</a>
+    <a href="/Products" class="btn btn-secondary btn-sm">Switch to Optimized</a>
 </div>
 
 <div class="row g-4">
@@ -12,10 +12,9 @@
         <div class="col-md-3 col-sm-6">
             <div class="card shadow-sm h-100">
 
-                @if (p.hasImage)
+                @if (!string.IsNullOrEmpty(p.imageData))
                 {
-                    <img src="/api/proxy/image/@(p.id)"
-                         loading="lazy"
+                    <img src="data:@(p.imageMimeType ?? "image/jpeg");base64,@p.imageData"
                          class="card-img-top"
                          style="height:180px; object-fit:cover;"
                          alt="@p.name" />
@@ -32,12 +31,6 @@
                     <h5>@p.name</h5>
                     <p class="fw-bold">$@p.price</p>
                     <p class="text-muted">Stock: @p.stockQty</p>
-
-                    <a class="btn btn-dark w-100"
-                       asp-page="/Products/Details"
-                       asp-route-id="@p.id">
-                        View
-                    </a>
                 </div>
             </div>
         </div>

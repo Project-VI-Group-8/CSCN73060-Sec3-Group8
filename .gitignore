@@ -419,3 +419,4 @@ backend/srs.md
 # Doxygen documentation
 backend/docs/
 docs/
+*.hprof

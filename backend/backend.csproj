@@ -33,5 +33,11 @@
   <ItemGroup>
     <Folder Include="Models\backend\Metrics\" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Content Include="SeedData\images\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 
 </Project>

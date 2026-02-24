@@ -20,5 +20,10 @@ namespace frontend.Services
         {
             return await _http.PostAsJsonAsync(url, data);
         }
+
+        public async Task<HttpResponseMessage> GetRawAsync(string url)
+        {
+            return await _http.GetAsync(url);
+        }
     }
 }

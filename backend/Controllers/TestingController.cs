@@ -81,7 +81,7 @@ public class TestingController : ControllerBase
 	/// <summary>
 	/// Generates a specified number of random test products with varying prices and stock.
 	/// </summary>
-	/// <param name="count">Number of products to generate (1-500, default 10).</param>
+	/// <param name="count">Number of products to generate (1-1000, default 10).</param>
 	/// <returns>Summary of generated products.</returns>
 	/// <response code="200">Products generated successfully.</response>
 	/// <response code="400">Invalid count parameter.</response>
@@ -90,8 +90,8 @@ public class TestingController : ControllerBase
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	public async Task<ActionResult<TestingResult>> GenerateProducts([FromQuery] int count = 10)
 	{
-		if (count < 1 || count > 500)
-			return BadRequest(new { error = "Count must be between 1 and 500." });
+		if (count < 1 || count > 1000)
+			return BadRequest(new { error = "Count must be between 1 and 1000." });
 
 		var products = new List<Product>();
 
@@ -105,6 +105,8 @@ public class TestingController : ControllerBase
 				Name = $"{adj} {noun} {_rng.Next(100, 999)}",
 				Price = Math.Round((decimal)(_rng.NextDouble() * 499 + 1), 2),
 				StockQty = _rng.Next(5, 500),
+				ImageData = GetRandomProductImage(),
+				ImageMimeType = "image/jpeg",
 				CreatedAt = DateTimeOffset.UtcNow,
 				UpdatedAt = DateTimeOffset.UtcNow
 			});
@@ -406,6 +408,36 @@ public class TestingController : ControllerBase
 			PaidOrders = await _db.Orders.CountAsync(o => o.Status == "PAID"),
 			VoidOrders = await _db.Orders.CountAsync(o => o.Status == "VOID")
 		});
+	}
+	
+	/// <summary>
+	/// Returns up to 1000 products including raw ImageData (base64 in JSON).
+	/// Used to demonstrate the performance cost of returning blobs in API responses.
+	/// Compare with GET /api/products which uses a DTO and excludes image data.
+	/// </summary>
+	/// <returns>List of products with full ImageData payload.</returns>
+	/// <response code="200">Products returned with image blobs.</response>
+	[HttpGet("products/unoptimized")]
+	[ProducesResponseType(typeof(IEnumerable<Product>), StatusCodes.Status200OK)]
+	public async Task<ActionResult<IEnumerable<Product>>> GetProductsUnoptimized()
+	{
+		return await _db.Products
+			.OrderBy(p => p.Id)
+			.Take(1000)
+			.ToListAsync();
+	}
+
+	/// <summary>
+	/// Retrieves a random product image from the seed data directory.
+	/// </summary>
+	/// <returns>
+	/// A byte array containing the binary content of a randomly selected .jpg image.
+	/// </returns>
+	private static byte[] GetRandomProductImage()
+	{
+		var imageDir = Path.Combine(AppContext.BaseDirectory, "SeedData", "images");
+		var images = Directory.GetFiles(imageDir, "*.jpg");
+		return System.IO.File.ReadAllBytes(images[_rng.Next(images.Length)]);
 	}
 }
 
