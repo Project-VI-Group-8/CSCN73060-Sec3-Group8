@@ -13,7 +13,7 @@ int main() {
         return -1;
     }
 
-	SOCKET ClientSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	SOCKET ClientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (ClientSocket == INVALID_SOCKET) {
         WSACleanup();
         return -1;
@@ -24,9 +24,11 @@ int main() {
 	serverAddr.sin_port = htons(54000);
     serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-
-
-
+    if (connect(ClientSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
+        closesocket(ClientSocket);
+        WSACleanup();
+        return -1;
+	}
 
     std::string testFile = "katl-kefd-B737-700.txt";
 
@@ -45,7 +47,7 @@ int main() {
 
 		// Send the record to the server
 		std::string message = "Time: [" + record.timestamp + "], Fuel: [" + std::to_string(record.fuel_qty) + "]";
-		int sendResult = sendto(ClientSocket, message.c_str(), message.size(), 0, (sockaddr*)&serverAddr, sizeof(serverAddr));
+		int sendResult = send(ClientSocket, message.c_str(), message.size(), 0);
 
         if (sendResult == SOCKET_ERROR) {
             std::cout << "Error sending packet. Error: " << WSAGetLastError() << std::endl;
@@ -61,7 +63,7 @@ int main() {
     }
 
 
-
+	shutdown(ClientSocket, 1); // Gracefully shutdown the connection
     closesocket(ClientSocket);
     WSACleanup();
 

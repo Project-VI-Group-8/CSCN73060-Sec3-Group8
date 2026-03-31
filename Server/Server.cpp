@@ -3,58 +3,75 @@
 
 #include <iostream>
 #include <windows.networking.sockets.h>
+#include "ClientHandler.h"
+#include <vector>
 
 using namespace std;
 
 int main()
 {
     WSADATA wsaData;
-
 	if ((WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
 		return -1;
 	}
 
-	SOCKET ServerSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (ServerSocket == INVALID_SOCKET) {
+	SOCKET listenerSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (listenerSocket == INVALID_SOCKET) {
+		cout << "Error creating socket. Error: " << WSAGetLastError() << endl;
 		WSACleanup();
 		return -1;
 	}
 
-	sockaddr_in serverAddr;
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(54000);
-	serverAddr.sin_addr.s_addr = INADDR_ANY;
+	sockaddr_in svrAddr;
+	svrAddr.sin_family = AF_INET;
+	svrAddr.sin_port = htons(54000);
+	svrAddr.sin_addr.s_addr = INADDR_ANY;
 
-	if (bind(ServerSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-		closesocket(ServerSocket);
+	if (bind(listenerSocket, (sockaddr*)&svrAddr, sizeof(svrAddr)) == SOCKET_ERROR) {
+		closesocket(listenerSocket);
 		WSACleanup();
 		return -1;
-	}	
+	}
 
-	cout << "Waiting for client" << endl;
+	if (listen(listenerSocket, SOMAXCONN) == SOCKET_ERROR) {
+		closesocket(listenerSocket);
+		WSACleanup();
+		return -1;
+	}
 
-	while (1)
+	cout << "Server listening on port 54000" << endl;
+
+
+
+	vector<unique_ptr<ClientHandler>> clients;
+
+	while (true)
 	{
-		char rxbuffer[1024] = { };
-		sockaddr_in clientAddr;
-		int len = sizeof(clientAddr);
+		sockaddr_in clientAddr{};
+		int addrLen = sizeof(clientAddr);
 
-		int n = recvfrom(ServerSocket, rxbuffer, sizeof(rxbuffer), 0, (struct sockaddr*)&clientAddr, &len);
-
-		if (n == SOCKET_ERROR)
-		{
-			std::cout << "Error receiving packet. Error: " << WSAGetLastError() << std::endl;
+		SOCKET clientSocket = accept(listenerSocket, (sockaddr*)&clientAddr, &addrLen);
+		if (clientSocket == INVALID_SOCKET) {
+			cout << "Error accepting connection. Error: " << WSAGetLastError() << endl;
+			continue;
 		}
-		else
-		{
-			std::cout << "Received packet from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << std::endl;
-			std::cout << "Data: " << rxbuffer << std::endl;
 
-		}
+		cout << "Accepted Connection from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << endl;
+
+		// Create connection handler
+		auto handler = make_unique<ClientHandler>(clientSocket, clientAddr);
+		handler->Start();
+		clients.push_back(std::move(handler));
 	}
 	
 
-	closesocket(ServerSocket);
+	// Clean up handlers
+	for (auto& handler : clients) {
+		handler->Stop();
+	}
+
+	// Close listener socket and clean up Winsock
+	closesocket(listenerSocket);
 	WSACleanup();
 	return 1;
     
