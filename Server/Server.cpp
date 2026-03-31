@@ -2,19 +2,61 @@
 //
 
 #include <iostream>
+#include <windows.networking.sockets.h>
+
+using namespace std;
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    WSADATA wsaData;
+
+	if ((WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
+		return -1;
+	}
+
+	SOCKET ServerSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (ServerSocket == INVALID_SOCKET) {
+		WSACleanup();
+		return -1;
+	}
+
+	sockaddr_in serverAddr;
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_port = htons(54000);
+	serverAddr.sin_addr.s_addr = INADDR_ANY;
+
+	if (bind(ServerSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
+		closesocket(ServerSocket);
+		WSACleanup();
+		return -1;
+	}	
+
+	cout << "Waiting for client" << endl;
+
+	while (1)
+	{
+		char rxbuffer[1024] = { };
+		sockaddr_in clientAddr;
+		int len = sizeof(clientAddr);
+
+		int n = recvfrom(ServerSocket, rxbuffer, sizeof(rxbuffer), 0, (struct sockaddr*)&clientAddr, &len);
+
+		if (n == SOCKET_ERROR)
+		{
+			std::cout << "Error receiving packet. Error: " << WSAGetLastError() << std::endl;
+		}
+		else
+		{
+			std::cout << "Received packet from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << std::endl;
+			std::cout << "Data: " << rxbuffer << std::endl;
+
+		}
+	}
+	
+
+	closesocket(ServerSocket);
+	WSACleanup();
+	return 1;
+    
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
