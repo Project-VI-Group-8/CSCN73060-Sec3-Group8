@@ -66,17 +66,9 @@ bool ClientHandler::IsRunning()
 	return _running;
 }
 
-double ClientHandler::CalculateFuelConsumption(double fuelQty)
+double ClientHandler::CalculateFuelConsumption()
 {
-	if (_startFuelQty == 0.0) {
-		_startFuelQty = fuelQty; // Set the starting fuel quantity on the first received data
-	}
-	else {
-		_currentFuelQty = fuelQty; // Update the current fuel quantity with the latest received data
-		_finalFuelQty = _currentFuelQty; // Update the final fuel quantity for consumption calculation
-		double consumed = _startFuelQty - _finalFuelQty; // Calculate consumed fuel
-		_totalFuelConsumed += consumed; // Update total fuel consumed
-		std::cout << "Calculated Fuel Consumption: " << consumed << " (Total Consumed: " << _totalFuelConsumed << ")" << std::endl;
-	}
-	return _totalFuelConsumed; // Return total fuel consumed for this client
+	_fuelConsumption = _previousFuelQty - _currentFuelQty;
+
+	return _fuelConsumption;
 }

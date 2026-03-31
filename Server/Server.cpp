@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 	// Configure the server address structure
 	sockaddr_in svrAddr;
 	svrAddr.sin_family = AF_INET;
-	svrAddr.sin_port = htons(54000);
+	svrAddr.sin_port = htons(port);
 	svrAddr.sin_addr.s_addr = INADDR_ANY;
 
 	// Bind the socket to the specified IP and port
@@ -91,6 +91,7 @@ int main(int argc, char* argv[])
 		}
 
 		// Log the accepted connection
+		// Write to file instead of screen.
 		cout << "Accepted Connection from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << endl;
 
 		// Start a new client handler for the accepted connection
@@ -108,6 +109,5 @@ int main(int argc, char* argv[])
 	closesocket(listenerSocket);
 	WSACleanup();
 	return 1;
-    
 }
 

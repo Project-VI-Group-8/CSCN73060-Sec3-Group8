@@ -17,7 +17,9 @@ private:
 	double				_currentFuelQty{ 0.0 };		// Current based on the latest received data
 	double				_finalFuelQty{ 0.0 };		// Final fuel quantity received
 
-	double	CalculateFuelConsumption(double fuelQty);		// Example method to calculate fuel consumption based on received data
+	double				_fuelConsumption{ 0.0 };	// The current fuel consumption
+
+	double	CalculateFuelConsumption();		// Example method to calculate fuel consumption based on received data
 	void	Run();											// Main loop for handling client communication
 public:
 	ClientHandler(SOCKET clientSocket, const sockaddr_in& clientAddr);	// Constructor
