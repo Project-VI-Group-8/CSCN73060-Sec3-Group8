@@ -133,9 +133,11 @@
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="CSVReader.cpp" />
+    <ClCompile Include="PacketBuilder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CSVReader.h" />
+    <ClInclude Include="PacketBuilder.h" />
     <ClInclude Include="TelemetryRecord.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
