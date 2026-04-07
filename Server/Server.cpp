@@ -3,60 +3,120 @@
 
 #include <iostream>
 #include <windows.networking.sockets.h>
+#include "ClientHandler.h"
+#include "DataHandler.h"
+#include <vector>
+#include <string>
 
 using namespace std;
 
-int main()
-{
-    WSADATA wsaData;
+const int DEFAULT_PORT = 54000;
+const char* DEFAULT_IP = { "127.0.0.1" };
 
+int main(int argc, char* argv[])
+{
+	int port = DEFAULT_PORT;
+	string ip = DEFAULT_IP;
+	// Parse command line arguments for port and IP
+	if (argc > 2) {
+
+		// Validate port number
+		if (atoi(argv[1]) <= 0 || atoi(argv[1]) > 65535) {
+			cout << "Invalid port number. Using default port: " << DEFAULT_PORT << endl;
+			port = DEFAULT_PORT;
+		}
+		else {
+			port = atoi(argv[1]);
+		}
+
+		// Validate IP address format (basic check)
+		if (inet_addr(argv[2]) == INADDR_NONE) {
+			cout << "Invalid IP address format. Using default IP: " << DEFAULT_IP << endl;
+			ip = DEFAULT_IP;
+		}
+		else {
+			ip = argv[2];
+		}
+	}
+
+	// Initialize Winsock
+    WSADATA wsaData;
 	if ((WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0) {
 		return -1;
 	}
 
-	SOCKET ServerSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (ServerSocket == INVALID_SOCKET) {
+	// Create a listening socket
+	SOCKET listenerSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (listenerSocket == INVALID_SOCKET) {
+		cout << "Error creating socket. Error: " << WSAGetLastError() << endl;
 		WSACleanup();
 		return -1;
 	}
 
-	sockaddr_in serverAddr;
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(54000);
-	serverAddr.sin_addr.s_addr = INADDR_ANY;
+	// Configure the server address structure
+	sockaddr_in svrAddr;
+	svrAddr.sin_family = AF_INET;
+	svrAddr.sin_port = htons(port);
+	svrAddr.sin_addr.s_addr = INADDR_ANY;
 
-	if (bind(ServerSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-		closesocket(ServerSocket);
+	// Bind the socket to the specified IP and port
+	if (bind(listenerSocket, (sockaddr*)&svrAddr, sizeof(svrAddr)) == SOCKET_ERROR) {
+		closesocket(listenerSocket);
 		WSACleanup();
 		return -1;
-	}	
+	}
 
-	cout << "Waiting for client" << endl;
+	// Start listening for incoming connections
+	if (listen(listenerSocket, SOMAXCONN) == SOCKET_ERROR) {
+		closesocket(listenerSocket);
+		WSACleanup();
+		return -1;
+	}
 
-	while (1)
+
+	cout << "Server listening on port " << port << endl;
+
+	// Start the data handler
+	DataHandler dataHandler("server_data.log");
+	dataHandler.Start();
+
+	// Vector to store active client handlers
+	vector<unique_ptr<ClientHandler>> clients;
+
+	while (true)
 	{
-		char rxbuffer[1024] = { };
+		// Create a socket for the incoming connection
 		sockaddr_in clientAddr;
 		int len = sizeof(clientAddr);
 
-		int n = recvfrom(ServerSocket, rxbuffer, sizeof(rxbuffer), 0, (struct sockaddr*)&clientAddr, &len);
-
-		if (n == SOCKET_ERROR)
-		{
-			std::cout << "Error receiving packet. Error: " << WSAGetLastError() << std::endl;
+		// Accept an incoming connection
+		SOCKET clientSocket = accept(listenerSocket, (sockaddr*)&clientAddr, &len);
+		if (clientSocket == INVALID_SOCKET) {
+			cout << "Error accepting connection. Error: " << WSAGetLastError() << endl;
+			continue;
 		}
-		else
-		{
-			std::cout << "Received packet from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << std::endl;
-			std::cout << "Data: " << rxbuffer << std::endl;
 
-		}
+		// Log the accepted connection
+		// Write to file instead of screen.
+		string acceptMsg = "Accepted Connection from " + string(inet_ntoa(clientAddr.sin_addr)) + ":" + to_string(ntohs(clientAddr.sin_port));
+		dataHandler.AddData(acceptMsg);
+
+		// Start a new client handler for the accepted connection
+		auto handler = make_unique<ClientHandler>(clientSocket, clientAddr, &dataHandler);
+		handler->Start();
+		clients.push_back(std::move(handler));
 	}
 	
+	// Clean up handlers
+	for (auto& handler : clients) {
+		handler->Stop();
+	}
+	
+	dataHandler.Stop();
 
-	closesocket(ServerSocket);
+	// Close listener socket and clean up Winsock
+	closesocket(listenerSocket);
 	WSACleanup();
 	return 1;
-    
 }
 
