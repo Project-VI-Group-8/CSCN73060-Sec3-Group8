@@ -8,7 +8,6 @@ ClientHandler::ClientHandler(SOCKET clientSocket, const sockaddr_in& clientAddr,
 	_dataHandler = dataHandler;
 }
 
-
 ClientHandler::~ClientHandler()
 {
 	Stop();

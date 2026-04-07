@@ -6,6 +6,7 @@
 #include <thread>
 #include <atomic>
 #include <fstream>
+#include <iostream>
 
 class DataHandler
 {
@@ -27,4 +28,5 @@ public:
 	void Start();								// Start the data handler thread
 	void Stop();								// Stop the data handler thread
 	void AddData(const std::string& data);		// Add data to the queue for processing
+	bool IsRunning();							// Check if the data handler is currently running
 };

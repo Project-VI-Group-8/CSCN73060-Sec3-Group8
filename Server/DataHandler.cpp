@@ -1,5 +1,4 @@
 #include "DataHandler.h"
-#include <iostream>
 
 DataHandler::DataHandler(const std::string& filename)
 {
@@ -104,4 +103,9 @@ void DataHandler::Run()
 
 	// Make sure the queue is empty
 	WriteData();
+}
+
+bool DataHandler::IsRunning()
+{
+	return _running;
 }

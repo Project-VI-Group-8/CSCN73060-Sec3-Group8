@@ -7,11 +7,11 @@
 class ClientHandler
 {
 private:
-	DataHandler*		_dataHandler;
-	SOCKET				_socket;				// Client socket for communication
-	sockaddr_in			_clientAddr;			// Client address information
-	std::thread			_thread;				// Thread for handling client communication
-	std::atomic_bool	_running{ false };		// If client is running
+	DataHandler* _dataHandler;						// Pointer to data handler for logging received messages
+	SOCKET				_socket;					// Client socket for communication
+	sockaddr_in			_clientAddr;				// Client address information
+	std::thread			_thread;					// Thread for handling client communication
+	std::atomic_bool	_running{ false };			// If client is running
 
 	int					_messageCount{ 0 };			// Count of messages received
 	double				_startFuelQty{ 0.0 };		// Starting fuel quantity 
@@ -21,14 +21,14 @@ private:
 
 	double				_fuelConsumption{ 0.0 };	// The current fuel consumption
 
-	double	CalculateFuelConsumption();		// Example method to calculate fuel consumption based on received data
-	void	Run();											// Main loop for handling client communication
+	double	CalculateFuelConsumption();				// Calculate fuel consumption
+	void	Run();									// Main loop
 public:
 	ClientHandler(SOCKET clientSocket, const sockaddr_in& clientAddr, DataHandler* dataHandler);	// Constructor
-	~ClientHandler();													// Destructor
+	~ClientHandler();																				// Destructor
 
-	void Start();		// Start the client handler thread
-	void Stop();		// Stop the client handler thread and clean up resources
-	bool IsRunning();	// Check if the client handler is currently running
+	void Start();									// Start the client handler thread
+	void Stop();									// Stop the client handler thread and clean up resources
+	bool IsRunning();								// Check if the client handler is currently running
 };
 
