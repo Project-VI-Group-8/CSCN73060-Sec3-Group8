@@ -57,33 +57,51 @@ void DataHandler::Stop()
 
 void DataHandler::AddData(const std::string& data)
 {
-
+	// Lock the mutex before pushing to queue
 	std::unique_lock<std::mutex> lock(_mutex);
 	_queue.push(data);
 	lock.unlock();
 
+	// Signal the write
 	_cv.notify_one();
+}
+
+void DataHandler::WriteData()
+{
+	// Grab the lock
+	std::unique_lock<std::mutex> lock(_mutex);
+
+	// Write data from queue to file
+	while (!_queue.empty())
+	{
+
+		if (_file.is_open())
+		{
+			_file << _queue.front() << std::endl;
+		}
+
+		_queue.pop();
+	}
+
 }
 
 void DataHandler::Run()
 {
 	while (_running) 
 	{
+		// Wait for the lock
 		std::unique_lock<std::mutex> lock(_mutex);
-		_cv.wait(lock, [this]() { return !_queue.empty() || !_running; });
-
-		while (!_queue.empty()) 
+		while (_queue.empty() && _running)
 		{
-			std::string data = _queue.front();
-			_queue.pop();
-			lock.unlock();
-
-			if (_file.is_open()) 
-			{
-				_file << data << std::endl;
-			}
-
-			lock.lock();
+			// The add data will notify the lock of data
+			_cv.wait(lock);
 		}
+
+		lock.unlock();
+
+		WriteData();
 	}
+
+	// Make sure the queue is empty
+	WriteData();
 }
