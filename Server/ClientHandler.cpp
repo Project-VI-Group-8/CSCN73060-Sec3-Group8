@@ -1,10 +1,11 @@
 #include "ClientHandler.h"
 #include <iostream>
 
-ClientHandler::ClientHandler(SOCKET clientSocket, const sockaddr_in& clientAddr)
+ClientHandler::ClientHandler(SOCKET clientSocket, const sockaddr_in& clientAddr, DataHandler* dataHandler)
 {
 	_socket = clientSocket;
 	_clientAddr = clientAddr;
+	_dataHandler = dataHandler;
 }
 
 
@@ -15,23 +16,30 @@ ClientHandler::~ClientHandler()
 
 void ClientHandler::Start()
 {
-	if (_running) {
+	// Check if the thread is already running
+	if (_running) 
+	{
 		return;
 	}
+
 	_running = true;
 	_thread = std::thread(&ClientHandler::Run, this);
 }
 
 void ClientHandler::Stop()
 {
-	if (!_running) {
+	// Check if the thread is already stopped
+	if (!_running) 
+	{
 		return;
 	}
 
-	shutdown(_socket, 2); // Gracefully shutdown the connection
+	// Gracefully shutdown the connection
+	shutdown(_socket, 2); 
 
 	// Signal the thread to stop and wait for it to finish
-	if (_thread.joinable()) {
+	if (_thread.joinable()) 
+	{
 		_thread.join();
 	}
 
@@ -47,15 +55,21 @@ void ClientHandler::Run()
 	while (_running) {
 		int recvResult = recv(_socket, buffer, sizeof(buffer) - 1, 0);
 		if (recvResult > 0) {
-			buffer[recvResult] = '\0'; // Null-terminate the received data
-			std::cout << "Received from " << inet_ntoa(_clientAddr.sin_addr) << ":" << ntohs(_clientAddr.sin_port) << " -> " << buffer << std::endl;
+			buffer[recvResult] = '\0';
+			std::string msg = "Received from " + std::string(inet_ntoa(_clientAddr.sin_addr)) + ":" + std::to_string(ntohs(_clientAddr.sin_port)) + " -> " + buffer;
+			if (_dataHandler) _dataHandler->AddData(msg);
+			else std::cout << msg << std::endl;
 		}
 		else if (recvResult == 0) {
-			std::cout << "Client disconnected: " << inet_ntoa(_clientAddr.sin_addr) << ":" << ntohs(_clientAddr.sin_port) << std::endl;
+			std::string msg = "Client disconnected: " + std::string(inet_ntoa(_clientAddr.sin_addr)) + ":" + std::to_string(ntohs(_clientAddr.sin_port));
+			if (_dataHandler) _dataHandler->AddData(msg);
+			else std::cout << msg << std::endl;
 			_running = false; // Client disconnected
 		}
 		else {
-			std::cout << "Error receiving data. Error: " << WSAGetLastError() << std::endl;
+			std::string msg = "Error receiving data. Error: " + std::to_string(WSAGetLastError());
+			if (_dataHandler) _dataHandler->AddData(msg);
+			else std::cout << msg << std::endl;
 			_running = false; // Error occurred
 		}
 	}

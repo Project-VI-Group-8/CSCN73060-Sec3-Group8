@@ -2,10 +2,12 @@
 #include <windows.networking.sockets.h>
 #include <thread>
 #include <atomic>
+#include "DataHandler.h"
 
 class ClientHandler
 {
 private:
+	DataHandler*		_dataHandler;
 	SOCKET				_socket;				// Client socket for communication
 	sockaddr_in			_clientAddr;			// Client address information
 	std::thread			_thread;				// Thread for handling client communication
@@ -22,7 +24,7 @@ private:
 	double	CalculateFuelConsumption();		// Example method to calculate fuel consumption based on received data
 	void	Run();											// Main loop for handling client communication
 public:
-	ClientHandler(SOCKET clientSocket, const sockaddr_in& clientAddr);	// Constructor
+	ClientHandler(SOCKET clientSocket, const sockaddr_in& clientAddr, DataHandler* dataHandler);	// Constructor
 	~ClientHandler();													// Destructor
 
 	void Start();		// Start the client handler thread

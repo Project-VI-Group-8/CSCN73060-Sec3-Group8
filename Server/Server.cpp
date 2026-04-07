@@ -4,7 +4,9 @@
 #include <iostream>
 #include <windows.networking.sockets.h>
 #include "ClientHandler.h"
+#include "DataHandler.h"
 #include <vector>
+#include <string>
 
 using namespace std;
 
@@ -74,6 +76,10 @@ int main(int argc, char* argv[])
 
 	cout << "Server listening on port " << port << endl;
 
+	// Start the data handler
+	DataHandler dataHandler("server_data.log");
+	dataHandler.Start();
+
 	// Vector to store active client handlers
 	vector<unique_ptr<ClientHandler>> clients;
 
@@ -92,10 +98,11 @@ int main(int argc, char* argv[])
 
 		// Log the accepted connection
 		// Write to file instead of screen.
-		cout << "Accepted Connection from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << endl;
+		string acceptMsg = "Accepted Connection from " + string(inet_ntoa(clientAddr.sin_addr)) + ":" + to_string(ntohs(clientAddr.sin_port));
+		dataHandler.AddData(acceptMsg);
 
 		// Start a new client handler for the accepted connection
-		auto handler = make_unique<ClientHandler>(clientSocket, clientAddr);
+		auto handler = make_unique<ClientHandler>(clientSocket, clientAddr, &dataHandler);
 		handler->Start();
 		clients.push_back(std::move(handler));
 	}
@@ -104,6 +111,8 @@ int main(int argc, char* argv[])
 	for (auto& handler : clients) {
 		handler->Stop();
 	}
+	
+	dataHandler.Stop();
 
 	// Close listener socket and clean up Winsock
 	closesocket(listenerSocket);
