@@ -1,5 +1,7 @@
 #include "DataHandler.h"
 
+/// @brief Constructs a DataHandler and opens the specified file in append mode.
+/// @param filename Path to the log file.
 DataHandler::DataHandler(const std::string& filename)
 {
 	// Open the file
@@ -12,6 +14,7 @@ DataHandler::DataHandler(const std::string& filename)
 	}
 }
 
+/// @brief destructor for DataHandler. Stops the thread and closes the file if it is open.
 DataHandler::~DataHandler()
 {
 	// Stop the thread
@@ -22,6 +25,7 @@ DataHandler::~DataHandler()
 	}
 }
 
+/// @brief Starts the data handler thread if it is not already running. The thread will run the Run() method.
 void DataHandler::Start()
 {
 	// Check if the thread is already running
@@ -35,6 +39,7 @@ void DataHandler::Start()
 	_thread = std::thread(&DataHandler::Run, this);
 }
 
+/// @brief Stops the data handler thread if it is running. Signals the thread to stop, waits for it to finish, and ensures that all remaining data in the queue is written to the file before exiting.
 void DataHandler::Stop()
 {
 	// Check if the thread is already stopped
@@ -54,6 +59,8 @@ void DataHandler::Stop()
 	}
 }
 
+/// @brief Adds data to the queue for processing
+/// @param data string data to add to the queue.
 void DataHandler::AddData(const std::string& data)
 {
 	// Lock the mutex before pushing to queue
@@ -65,6 +72,7 @@ void DataHandler::AddData(const std::string& data)
 	_cv.notify_one();
 }
 
+/// @brief Writes all data from the queue to the file.
 void DataHandler::WriteData()
 {
 	// Grab the lock
@@ -84,6 +92,8 @@ void DataHandler::WriteData()
 
 }
 
+/// @brief Main loop for data handler thread.
+//  Waits for data to be added and writes to a file
 void DataHandler::Run()
 {
 	while (_running) 
@@ -105,6 +115,8 @@ void DataHandler::Run()
 	WriteData();
 }
 
+/// @brief Checks if the data handler thread is currently running.
+/// @return True/False indicating if the data handler thread is running.
 bool DataHandler::IsRunning()
 {
 	return _running;
