@@ -1,10 +1,6 @@
 #include "ClientHandler.h"
 #include <iostream>
 
-/// @brief Constructs a ClientHandler for a given client socket and address, and a pointer to the data handler for logging received messages.
-/// @param clientSocket incoming client socket to handle communication with the client
-/// @param clientAddr address information for the client, used for logging purposes
-/// @param dataHandler data handler pointer for logging received messages
 ClientHandler::ClientHandler(SOCKET clientSocket, const sockaddr_in& clientAddr, DataHandler* dataHandler)
 {
 	_socket = clientSocket;
@@ -12,13 +8,11 @@ ClientHandler::ClientHandler(SOCKET clientSocket, const sockaddr_in& clientAddr,
 	_dataHandler = dataHandler;
 }
 
-/// @brief Destructor for ClientHandler. Stops the client handler thread and cleans up resources.
 ClientHandler::~ClientHandler()
 {
 	Stop();
 }
 
-/// @brief Starts client handler thread 
 void ClientHandler::Start()
 {
 	// Check if the thread is already running
@@ -31,7 +25,6 @@ void ClientHandler::Start()
 	_thread = std::thread(&ClientHandler::Run, this);
 }
 
-/// @brief Stops client handler thread and cleans up resources.
 void ClientHandler::Stop()
 {
 	// Check if the thread is already stopped
@@ -55,7 +48,6 @@ void ClientHandler::Stop()
 	closesocket(_socket);
 }
 
-/// @brief Main working loop for client thread. Receives data from the client socket and processes telemetry data.
 void ClientHandler::Run()
 {
 	char buffer[1024];
@@ -82,15 +74,11 @@ void ClientHandler::Run()
 	}
 }
 
-/// @brief Check if the client handler thread is currently running.
-/// @return True/False indicating if the client handler thread is running.
 bool ClientHandler::IsRunning()
 {
 	return _running;
 }
 
-/// @brief Calculates the fuel consumption based on previous and current fuel quantities
-/// @return The calculated fuel consumption
 double ClientHandler::CalculateFuelConsumption()
 {
 	_fuelConsumption = _previousFuelQty - _currentFuelQty;
