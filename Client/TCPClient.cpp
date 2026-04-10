@@ -1,5 +1,6 @@
 #include "TCPClient.h"
 
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <WS2tcpip.h>
@@ -45,6 +46,37 @@ void TCPClient::Connect()
 		WSACleanup();
 		throw std::runtime_error("connect failed with error " + std::to_string(error));
 	}
+
+	char idBuffer[32] = {};
+	const int recvResult = recv(_sock, idBuffer, sizeof(idBuffer) - 1, 0);
+	if (recvResult <= 0) {
+		const int error = recvResult == 0 ? 0 : WSAGetLastError();
+		closesocket(_sock);
+		_sock = INVALID_SOCKET;
+		WSACleanup();
+		throw std::runtime_error("Failed to receive aircraft ID. Error " + std::to_string(error));
+	}
+
+	idBuffer[recvResult] = '\0';
+
+	try {
+		_aircraftId = std::stoi(idBuffer);
+	}
+	catch (const std::exception&) {
+		closesocket(_sock);
+		_sock = INVALID_SOCKET;
+		WSACleanup();
+		throw std::runtime_error("Received invalid aircraft ID from server: " + std::string(idBuffer));
+	}
+
+	if (_aircraftId <= 0) {
+		closesocket(_sock);
+		_sock = INVALID_SOCKET;
+		WSACleanup();
+		throw std::runtime_error("Received non-positive aircraft ID from server: " + std::to_string(_aircraftId));
+	}
+
+	std::cout << "Connected to server as aircraft " << _aircraftId << std::endl;
 }
 
 void TCPClient::Run()
