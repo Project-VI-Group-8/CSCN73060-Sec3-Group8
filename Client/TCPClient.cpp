@@ -81,7 +81,39 @@ void TCPClient::Connect()
 
 void TCPClient::Run()
 {
-	throw std::runtime_error("TCPClient::Run is not implemented yet");
+	if (_sock == INVALID_SOCKET) {
+		throw std::runtime_error("TCPClient::Run called before a successful connection");
+	}
+
+	if (_aircraftId <= 0) {
+		throw std::runtime_error("TCPClient::Run called without a valid aircraft ID");
+	}
+
+	if (!_reader.IsOpen()) {
+		throw std::runtime_error("Telemetry CSV file is not open");
+	}
+
+	TelemetryRecord record;
+	int sentCount = 0;
+
+	while (_reader.ReadNext(record)) {
+		const std::string packet = PacketBuilder::Build(_aircraftId, record);
+		const int sendResult = send(_sock, packet.c_str(), static_cast<int>(packet.size()), 0);
+
+		if (sendResult == SOCKET_ERROR) {
+			throw std::runtime_error("send failed with error " + std::to_string(WSAGetLastError()));
+		}
+
+		++sentCount;
+		std::cout << "Sent packet " << sentCount << " for aircraft " << _aircraftId << std::endl;
+
+		if (_delayMs > 0) {
+			Sleep(_delayMs);
+		}
+	}
+
+	std::cout << "Completed telemetry transmission for aircraft " << _aircraftId
+		<< " after " << sentCount << " packets" << std::endl;
 }
 
 void TCPClient::Disconnect()
