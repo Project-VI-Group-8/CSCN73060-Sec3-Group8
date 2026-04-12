@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include <optional>
 
 namespace {
@@ -191,22 +192,41 @@ void ClientHandler::Run()
 
 				++_packetCount;
 				_lastTimestamp = parsedPacket->timestamp;
+
+				if (_hasPreviousSample) {
+					const double deltaFuel = _previousFuelQty - parsedPacket->fuelQty;
+					const double deltaSeconds = std::difftime(*parsedTimestamp, _previousTimestamp);
+					const double currentRate = (deltaSeconds > 0.0) ? deltaFuel / deltaSeconds : 0.0;
+
+					// Maintain the average online so the handler does not need to keep
+					// every instantaneous rate for the full duration of the flight.
+					++_averageSampleCount;
+					_runningAverage += (currentRate - _runningAverage) / static_cast<double>(_averageSampleCount);
+				}
+
 				_previousFuelQty = parsedPacket->fuelQty;
 				_previousTimestamp = *parsedTimestamp;
 				_hasPreviousSample = true;
 			}
 		}
 		else if (recvResult == 0) {
-			std::string msg = "Aircraft " + std::to_string(_aircraftId) + " disconnected: "
-				+ std::string(inet_ntoa(_clientAddr.sin_addr)) + ":" + std::to_string(ntohs(_clientAddr.sin_port));
-			if (_dataHandler) _dataHandler->AddData(msg);
-			else std::cout << msg << std::endl;
+			if (_packetCount > 0 && _dataHandler) {
+				std::ostringstream flightRecord;
+				flightRecord << _aircraftId << ','
+					<< std::fixed << std::setprecision(6) << _runningAverage << ','
+					<< _lastTimestamp << ','
+					<< _packetCount;
+				_dataHandler->AddData(flightRecord.str());
+			}
+
+			std::cout << "Aircraft " << _aircraftId << " disconnected after "
+				<< _packetCount << " packets. Final average fuel consumption: "
+				<< std::fixed << std::setprecision(6) << _runningAverage << " gal/s" << std::endl;
 			_running = false; // Client disconnected
 		}
 		else {
-			std::string msg = "Error receiving data. Error: " + std::to_string(WSAGetLastError());
-			if (_dataHandler) _dataHandler->AddData(msg);
-			else std::cout << msg << std::endl;
+			std::cerr << "Error receiving data from aircraft " << _aircraftId
+				<< ". Error: " << WSAGetLastError() << std::endl;
 			_running = false; // Error occurred
 		}
 	}
@@ -215,11 +235,4 @@ void ClientHandler::Run()
 bool ClientHandler::IsRunning()
 {
 	return _running;
-}
-
-double ClientHandler::CalculateFuelConsumption()
-{
-	_fuelConsumption = _previousFuelQty - _currentFuelQty;
-
-	return _fuelConsumption;
 }
