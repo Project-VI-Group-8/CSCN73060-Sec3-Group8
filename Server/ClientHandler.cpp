@@ -1,5 +1,89 @@
 #include "ClientHandler.h"
+
 #include <iostream>
+#include <sstream>
+#include <optional>
+
+namespace {
+struct ParsedTelemetryPacket {
+	int aircraftId = 0;
+	std::string timestamp;
+	double fuelQty = 0.0;
+};
+
+std::optional<std::time_t> ParseTimestamp(const std::string& timestamp)
+{
+	// Project telemetry files use a flexible D_M_YYYY HH:MM:SS shape, so parse
+	// the date/time components manually instead of relying on a fixed-width format.
+	const auto spacePos = timestamp.find(' ');
+	if (spacePos == std::string::npos) {
+		return std::nullopt;
+	}
+
+	const std::string datePart = timestamp.substr(0, spacePos);
+	const std::string timePart = timestamp.substr(spacePos + 1);
+
+	std::stringstream dateStream(datePart);
+	std::stringstream timeStream(timePart);
+	std::string dayStr;
+	std::string monthStr;
+	std::string yearStr;
+	std::string hourStr;
+	std::string minuteStr;
+	std::string secondStr;
+
+	if (!std::getline(dateStream, dayStr, '_') || !std::getline(dateStream, monthStr, '_') || !std::getline(dateStream, yearStr)) {
+		return std::nullopt;
+	}
+	if (!std::getline(timeStream, hourStr, ':') || !std::getline(timeStream, minuteStr, ':') || !std::getline(timeStream, secondStr)) {
+		return std::nullopt;
+	}
+
+	try {
+		std::tm tm{};
+		tm.tm_mday = std::stoi(dayStr);
+		tm.tm_mon = std::stoi(monthStr) - 1;
+		tm.tm_year = std::stoi(yearStr) - 1900;
+		tm.tm_hour = std::stoi(hourStr);
+		tm.tm_min = std::stoi(minuteStr);
+		tm.tm_sec = std::stoi(secondStr);
+		tm.tm_isdst = -1;
+
+		const std::time_t parsed = std::mktime(&tm);
+		if (parsed == -1) {
+			return std::nullopt;
+		}
+
+		return parsed;
+	}
+	catch (const std::exception&) {
+		return std::nullopt;
+	}
+}
+
+std::optional<ParsedTelemetryPacket> ParsePacket(const std::string& packet)
+{
+	std::stringstream ss(packet);
+	std::string idStr;
+	std::string timestampStr;
+	std::string fuelStr;
+
+	if (!std::getline(ss, idStr, '|') || !std::getline(ss, timestampStr, '|') || !std::getline(ss, fuelStr)) {
+		return std::nullopt;
+	}
+
+	try {
+		ParsedTelemetryPacket parsed;
+		parsed.aircraftId = std::stoi(idStr);
+		parsed.timestamp = timestampStr;
+		parsed.fuelQty = std::stod(fuelStr);
+		return parsed;
+	}
+	catch (const std::exception&) {
+		return std::nullopt;
+	}
+}
+}
 
 ClientHandler::ClientHandler(SOCKET clientSocket, const sockaddr_in& clientAddr, int aircraftId, DataHandler* dataHandler)
 {
@@ -62,15 +146,55 @@ void ClientHandler::Run()
 	}
 
 	char buffer[1024];
+	std::string recvBuffer;
 	while (_running) {
 		int recvResult = recv(_socket, buffer, sizeof(buffer) - 1, 0);
 		if (recvResult > 0) {
-			buffer[recvResult] = '\0';
-			std::string msg = "Received from aircraft " + std::to_string(_aircraftId) + " "
-				+ std::string(inet_ntoa(_clientAddr.sin_addr)) + ":" + std::to_string(ntohs(_clientAddr.sin_port))
-				+ " -> " + buffer;
-			if (_dataHandler) _dataHandler->AddData(msg);
-			else std::cout << msg << std::endl;
+			// TCP is a byte stream, so one recv() can contain partial packets or
+			// multiple newline-delimited packets. Accumulate until a full line exists.
+			recvBuffer.append(buffer, buffer + recvResult);
+
+			std::size_t newlinePos = std::string::npos;
+			while ((newlinePos = recvBuffer.find('\n')) != std::string::npos) {
+				std::string packet = recvBuffer.substr(0, newlinePos);
+				recvBuffer.erase(0, newlinePos + 1);
+
+				if (!packet.empty() && packet.back() == '\r') {
+					packet.pop_back();
+				}
+				if (packet.empty()) {
+					continue;
+				}
+
+				const auto parsedPacket = ParsePacket(packet);
+				if (!parsedPacket.has_value()) {
+					std::cerr << "Malformed packet from aircraft " << _aircraftId
+						<< ": " << packet << std::endl;
+					continue;
+				}
+				if (parsedPacket->aircraftId != _aircraftId) {
+					std::cerr << "Aircraft ID mismatch. Expected " << _aircraftId
+						<< " but received " << parsedPacket->aircraftId << std::endl;
+					continue;
+				}
+				if (parsedPacket->fuelQty < 0.0) {
+					std::cerr << "Negative fuel quantity from aircraft " << _aircraftId << std::endl;
+					continue;
+				}
+
+				const auto parsedTimestamp = ParseTimestamp(parsedPacket->timestamp);
+				if (!parsedTimestamp.has_value()) {
+					std::cerr << "Invalid timestamp from aircraft " << _aircraftId
+						<< ": " << parsedPacket->timestamp << std::endl;
+					continue;
+				}
+
+				++_packetCount;
+				_lastTimestamp = parsedPacket->timestamp;
+				_previousFuelQty = parsedPacket->fuelQty;
+				_previousTimestamp = *parsedTimestamp;
+				_hasPreviousSample = true;
+			}
 		}
 		else if (recvResult == 0) {
 			std::string msg = "Aircraft " + std::to_string(_aircraftId) + " disconnected: "
