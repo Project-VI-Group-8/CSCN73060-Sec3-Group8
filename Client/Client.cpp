@@ -32,8 +32,14 @@ int main(int argc, char* argv[]) {
 
 	try {
 		TCPClient client(serverIP, port, csvPath, delayMs);
-		client.Connect();
-		client.Run();
+		try {
+			client.Connect();
+			client.Run();
+		}
+		catch (...) {
+			client.Disconnect();
+			throw;
+		}
 		client.Disconnect();
 		return 0;
 	}

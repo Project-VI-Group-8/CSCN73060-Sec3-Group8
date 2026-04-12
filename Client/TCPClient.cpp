@@ -98,10 +98,19 @@ void TCPClient::Run()
 
 	while (_reader.ReadNext(record)) {
 		const std::string packet = PacketBuilder::Build(_aircraftId, record);
-		const int sendResult = send(_sock, packet.c_str(), static_cast<int>(packet.size()), 0);
+		int totalSent = 0;
+		while (totalSent < static_cast<int>(packet.size())) {
+			const int sendResult = send(
+				_sock,
+				packet.c_str() + totalSent,
+				static_cast<int>(packet.size()) - totalSent,
+				0);
 
-		if (sendResult == SOCKET_ERROR) {
-			throw std::runtime_error("send failed with error " + std::to_string(WSAGetLastError()));
+			if (sendResult == SOCKET_ERROR) {
+				throw std::runtime_error("send failed with error " + std::to_string(WSAGetLastError()));
+			}
+
+			totalSent += sendResult;
 		}
 
 		++sentCount;
