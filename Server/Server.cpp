@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <atomic>
+#include <filesystem>
 
 using namespace std;
 
@@ -63,8 +64,14 @@ int main(int argc, char* argv[])
 	cout << "Server listening on port " << port << endl;
 
 	// Start the data handler
-	DataHandler dataHandler("server_data.log");
+	const std::string logPath = "flight_log.csv";
+	const bool shouldWriteHeader = !std::filesystem::exists(logPath)
+		|| std::filesystem::file_size(logPath) == 0;
+	DataHandler dataHandler(logPath);
 	dataHandler.Start();
+	if (shouldWriteHeader) {
+		dataHandler.AddData("aircraft_id,final_avg_gal_per_sec,flight_end_time,total_packets");
+	}
 
 	// Vector to store active client handlers
 	vector<unique_ptr<ClientHandler>> clients;
