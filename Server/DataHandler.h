@@ -26,7 +26,7 @@ private:
 	void WriteData();							// Write data from queue to file
 
 public:
-	/// @brief Constructs a DataHandler and opens the specified file in append mode.
+	/// @brief Constructs a DataHandler and opens the specified file for a fresh server run.
 	/// @param filename Path to the log file.
 	DataHandler(const std::string& filename);	// Constructor
 

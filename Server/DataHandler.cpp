@@ -2,8 +2,9 @@
 
 DataHandler::DataHandler(const std::string& filename)
 {
-	// Open the file
-	_file.open(filename, std::ios::app);
+	// Start each server run with a fresh CSV log so the results from the
+	// current execution are not mixed with stale output from prior runs.
+	_file.open(filename, std::ios::trunc);
 
 	// Check if the file was opened successfully
 	if (!_file.is_open()) 

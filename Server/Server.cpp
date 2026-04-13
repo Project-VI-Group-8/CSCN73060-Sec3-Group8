@@ -65,13 +65,9 @@ int main(int argc, char* argv[])
 
 	// Start the data handler
 	const std::string logPath = "flight_log.csv";
-	const bool shouldWriteHeader = !std::filesystem::exists(logPath)
-		|| std::filesystem::file_size(logPath) == 0;
 	DataHandler dataHandler(logPath);
 	dataHandler.Start();
-	if (shouldWriteHeader) {
-		dataHandler.AddData("aircraft_id,final_avg_gal_per_sec,flight_end_time,total_packets");
-	}
+	dataHandler.AddData("aircraft_id,final_avg_gal_per_sec,flight_end_time,total_packets");
 
 	// Vector to store active client handlers
 	vector<unique_ptr<ClientHandler>> clients;
