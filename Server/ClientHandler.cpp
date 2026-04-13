@@ -1,10 +1,11 @@
 #include "ClientHandler.h"
 #include <iostream>
 
-ClientHandler::ClientHandler(SOCKET clientSocket, const sockaddr_in& clientAddr, DataHandler* dataHandler)
+ClientHandler::ClientHandler(SOCKET clientSocket, const sockaddr_in& clientAddr, int aircraftId, DataHandler* dataHandler)
 {
 	_socket = clientSocket;
 	_clientAddr = clientAddr;
+	_aircraftId = aircraftId;
 	_dataHandler = dataHandler;
 }
 
@@ -50,17 +51,30 @@ void ClientHandler::Stop()
 
 void ClientHandler::Run()
 {
+	const std::string idMessage = std::to_string(_aircraftId);
+	if (send(_socket, idMessage.c_str(), static_cast<int>(idMessage.size()), 0) == SOCKET_ERROR) {
+		std::string msg = "Error sending aircraft ID " + std::to_string(_aircraftId)
+			+ ". Error: " + std::to_string(WSAGetLastError());
+		if (_dataHandler) _dataHandler->AddData(msg);
+		else std::cout << msg << std::endl;
+		_running = false;
+		return;
+	}
+
 	char buffer[1024];
 	while (_running) {
 		int recvResult = recv(_socket, buffer, sizeof(buffer) - 1, 0);
 		if (recvResult > 0) {
 			buffer[recvResult] = '\0';
-			std::string msg = "Received from " + std::string(inet_ntoa(_clientAddr.sin_addr)) + ":" + std::to_string(ntohs(_clientAddr.sin_port)) + " -> " + buffer;
+			std::string msg = "Received from aircraft " + std::to_string(_aircraftId) + " "
+				+ std::string(inet_ntoa(_clientAddr.sin_addr)) + ":" + std::to_string(ntohs(_clientAddr.sin_port))
+				+ " -> " + buffer;
 			if (_dataHandler) _dataHandler->AddData(msg);
 			else std::cout << msg << std::endl;
 		}
 		else if (recvResult == 0) {
-			std::string msg = "Client disconnected: " + std::string(inet_ntoa(_clientAddr.sin_addr)) + ":" + std::to_string(ntohs(_clientAddr.sin_port));
+			std::string msg = "Aircraft " + std::to_string(_aircraftId) + " disconnected: "
+				+ std::string(inet_ntoa(_clientAddr.sin_addr)) + ":" + std::to_string(ntohs(_clientAddr.sin_port));
 			if (_dataHandler) _dataHandler->AddData(msg);
 			else std::cout << msg << std::endl;
 			_running = false; // Client disconnected

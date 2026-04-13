@@ -7,6 +7,7 @@
 #include "DataHandler.h"
 #include <vector>
 #include <string>
+#include <atomic>
 
 using namespace std;
 
@@ -82,6 +83,7 @@ int main(int argc, char* argv[])
 
 	// Vector to store active client handlers
 	vector<unique_ptr<ClientHandler>> clients;
+	std::atomic_int nextAircraftId{ 1 };
 
 	while (true)
 	{
@@ -96,13 +98,16 @@ int main(int argc, char* argv[])
 			continue;
 		}
 
+		const int aircraftId = nextAircraftId.fetch_add(1);
+
 		// Log the accepted connection
 		// Write to file instead of screen.
-		string acceptMsg = "Accepted Connection from " + string(inet_ntoa(clientAddr.sin_addr)) + ":" + to_string(ntohs(clientAddr.sin_port));
+		string acceptMsg = "Accepted aircraft " + to_string(aircraftId) + " from "
+			+ string(inet_ntoa(clientAddr.sin_addr)) + ":" + to_string(ntohs(clientAddr.sin_port));
 		dataHandler.AddData(acceptMsg);
 
 		// Start a new client handler for the accepted connection
-		auto handler = make_unique<ClientHandler>(clientSocket, clientAddr, &dataHandler);
+		auto handler = make_unique<ClientHandler>(clientSocket, clientAddr, aircraftId, &dataHandler);
 		handler->Start();
 		clients.push_back(std::move(handler));
 	}
@@ -119,4 +124,3 @@ int main(int argc, char* argv[])
 	WSACleanup();
 	return 1;
 }
-
