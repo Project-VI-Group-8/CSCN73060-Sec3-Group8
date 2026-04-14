@@ -1,5 +1,5 @@
 #pragma once
-#include <windows.networking.sockets.h>
+#include <WinSock2.h>
 #include <string>
 #include <thread>
 #include <atomic>

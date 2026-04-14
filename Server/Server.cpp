@@ -2,7 +2,8 @@
 //
 
 #include <iostream>
-#include <windows.networking.sockets.h>
+#include <WinSock2.h>
+#include <WS2tcpip.h>
 #include "ClientHandler.h"
 #include "DataHandler.h"
 #include <vector>
@@ -67,7 +68,7 @@ int main(int argc, char* argv[])
 	const std::string logPath = "flight_log.csv";
 	DataHandler dataHandler(logPath);
 	dataHandler.Start();
-	dataHandler.AddData("aircraft_id,final_avg_gal_per_sec,flight_end_time,total_packets");
+		dataHandler.AddData("aircraft_id,final_avg_gal_per_sec,flight_end_time,total_packets");
 
 	// Vector to store active client handlers
 	vector<unique_ptr<ClientHandler>> clients;
@@ -87,9 +88,11 @@ int main(int argc, char* argv[])
 		}
 
 		const int aircraftId = nextAircraftId.fetch_add(1);
+		char clientIpAddress[INET_ADDRSTRLEN]{};
+		InetNtopA(AF_INET, &clientAddr.sin_addr, clientIpAddress, INET_ADDRSTRLEN);
 
 		cout << "Accepted aircraft " << aircraftId << " from "
-			<< inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << endl;
+			<< clientIpAddress << ":" << ntohs(clientAddr.sin_port) << endl;
 
 		// Start a new client handler for the accepted connection
 		auto handler = make_unique<ClientHandler>(clientSocket, clientAddr, aircraftId, &dataHandler);

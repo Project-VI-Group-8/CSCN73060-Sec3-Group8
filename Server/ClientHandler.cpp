@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iomanip>
 #include <optional>
+#include <mstcpip.h>
 
 namespace {
 struct ParsedTelemetryPacket {
@@ -144,6 +145,29 @@ void ClientHandler::Run()
 		else std::cout << msg << std::endl;
 		_running = false;
 		return;
+	}
+
+	BOOL keepAlive = TRUE;
+	if (setsockopt(_socket, SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<const char*>(&keepAlive), sizeof(keepAlive)) == SOCKET_ERROR) {
+		std::cerr << "Failed to enable TCP keepalive. Error: " << WSAGetLastError() << std::endl;
+	}
+
+	tcp_keepalive keepAliveSettings{};
+	keepAliveSettings.onoff = 1;
+	keepAliveSettings.keepalivetime = 5000;
+	keepAliveSettings.keepaliveinterval = 1000;
+	DWORD bytesReturned = 0;
+
+	if (WSAIoctl(_socket,
+		SIO_KEEPALIVE_VALS,
+		&keepAliveSettings,
+		sizeof(keepAliveSettings),
+		nullptr,
+		0,
+		&bytesReturned,
+		nullptr,
+		nullptr) == SOCKET_ERROR) {
+		std::cerr << "Failed to configure TCP keepalive timings. Error: " << WSAGetLastError() << std::endl;
 	}
 
 	char buffer[1024];
