@@ -8,35 +8,21 @@
 #include <vector>
 #include <string>
 #include <atomic>
+#include <filesystem>
 
 using namespace std;
 
 const int DEFAULT_PORT = 54000;
-const char* DEFAULT_IP = { "127.0.0.1" };
-
 int main(int argc, char* argv[])
 {
 	int port = DEFAULT_PORT;
-	string ip = DEFAULT_IP;
-	// Parse command line arguments for port and IP
-	if (argc > 2) {
-
-		// Validate port number
+	if (argc > 1) {
 		if (atoi(argv[1]) <= 0 || atoi(argv[1]) > 65535) {
 			cout << "Invalid port number. Using default port: " << DEFAULT_PORT << endl;
 			port = DEFAULT_PORT;
 		}
 		else {
 			port = atoi(argv[1]);
-		}
-
-		// Validate IP address format (basic check)
-		if (inet_addr(argv[2]) == INADDR_NONE) {
-			cout << "Invalid IP address format. Using default IP: " << DEFAULT_IP << endl;
-			ip = DEFAULT_IP;
-		}
-		else {
-			ip = argv[2];
 		}
 	}
 
@@ -78,8 +64,10 @@ int main(int argc, char* argv[])
 	cout << "Server listening on port " << port << endl;
 
 	// Start the data handler
-	DataHandler dataHandler("server_data.log");
+	const std::string logPath = "flight_log.csv";
+	DataHandler dataHandler(logPath);
 	dataHandler.Start();
+	dataHandler.AddData("aircraft_id,final_avg_gal_per_sec,flight_end_time,total_packets");
 
 	// Vector to store active client handlers
 	vector<unique_ptr<ClientHandler>> clients;
@@ -100,11 +88,8 @@ int main(int argc, char* argv[])
 
 		const int aircraftId = nextAircraftId.fetch_add(1);
 
-		// Log the accepted connection
-		// Write to file instead of screen.
-		string acceptMsg = "Accepted aircraft " + to_string(aircraftId) + " from "
-			+ string(inet_ntoa(clientAddr.sin_addr)) + ":" + to_string(ntohs(clientAddr.sin_port));
-		dataHandler.AddData(acceptMsg);
+		cout << "Accepted aircraft " << aircraftId << " from "
+			<< inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << endl;
 
 		// Start a new client handler for the accepted connection
 		auto handler = make_unique<ClientHandler>(clientSocket, clientAddr, aircraftId, &dataHandler);
